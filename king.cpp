@@ -18,9 +18,34 @@
 
 using namespace std;
 
+king::king(Color _color)
+  : ChessPiece(_color)
+{
+  possDirs.push_back(VERTICAL);
+  possDirs.push_back(-VERTICAL);
+  possDirs.push_back(1);
+  possDirs.push_back(-1);
+}
+
 bool king::validDirection(int source, int destination)
 {
-  return (abs(destination - source) == VERTICAL || abs(destination - source) == 1);
+  return (abs(destination - source) == VERTICAL || abs(destination - source) == DIAGONAL || abs(destination - source) == ANTIDIAGONAL || abs(destination - source) == 1);
+}
+
+vector<int> king::generateMoves(int source, ChessPiece **board)
+{
+  // Generate a vector containing every possible square this piece can move to
+  // Radiate out, stopping if it reaches the edge of the board, or an occupied square
+  vector<int> result;
+  vector<int> possDirs = getPossDirs();
+  for (vector<int>::iterator it = possDirs.begin(); it != possDirs.end(); ++it)
+    {
+      if (!((source + *it) & 0x88) && board[source + *it] == NULL)
+	{
+	  result.push_back(source + *it);
+	}
+    }
+  return result;
 }
 
 /*int king::getDirection(int source, int destination) const
@@ -35,9 +60,15 @@ bool king::validDirection(int source, int destination)
 
 ostream &king::output(ostream &out) const
 {
+  out << "King";
+  return out;
+}
+
+ostream &king::outputS(ostream &out) const
+{
   if (color == WHITE)
-    out << "\xe2\x99\x94";
+    out << "\u2654";
   else
-    out << "\xe2\x99\x9a";
+    out << "\u265a";
   return out;
 }

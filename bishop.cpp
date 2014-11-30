@@ -18,12 +18,45 @@
 
 using namespace std;
 
-bool bishop::validDirection(int source, int destination)
+bishop::bishop(Color _color)
+  : ChessPiece(_color)
 {
-  return (abs(destination - source) % DIAGONAL || abs(destination-source) % ANTIDIAGONAL);
+  possDirs.push_back(DIAGONAL);
+  possDirs.push_back(-DIAGONAL);
+  possDirs.push_back(ANTIDIAGONAL);
+  possDirs.push_back(-ANTIDIAGONAL);
 }
 
-/*int bishop::getDirection(int source, int destination) const
+bool bishop::validDirection(int source, int destination)
+{
+  return (abs(destination - source) % DIAGONAL == 0 || abs(destination-source) % ANTIDIAGONAL == 0);
+}
+
+/*vector<int> bishop::generateMoves(int source, ChessPiece **board)
+{
+  // Generate a vector containing every possible square this piece can move to
+  // Radiate out, stopping if it reaches the edge of the board, or an occupied square
+  vector<int> result;
+  for (int i = source; !(i & 0x88) && board[i] != NULL; i += DIAGONAL)
+    {
+      result.push_back(i);
+    }
+  for (int i = source; !(i & 0x88) && board[i] != NULL; i -= DIAGONAL)
+    {
+      result.push_back(i);
+    }
+  for (int i = source; !(i & 0x88) && board[i] != NULL; i += ANTIDIAGONAL)
+    {
+      result.push_back(i);
+    }
+  for (int i = source; !(i & 0x88) && board[i] != NULL; i -= ANTIDIAGONAL)
+    {
+      result.push_back(i);
+    }
+  return result;
+}
+
+int bishop::getDirection(int source, int destination) const
 {
   if (!(abs(destination - source) % DIAGONAL))
     return DIAGONAL;
@@ -35,9 +68,15 @@ bool bishop::validDirection(int source, int destination)
 
 ostream &bishop::output(ostream &out) const
 {
+  out << "Bishop";
+  return out;
+}
+
+ostream &bishop::outputS(ostream &out) const
+{
   if (color == WHITE)
-    out << "\xe2\x99\x97";
+    out << "\u2657";
   else
-    out << "\xe2\x99\x9d";
+    out << "\u265d";
   return out;
 }

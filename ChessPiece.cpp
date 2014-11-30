@@ -25,6 +25,7 @@ const int ChessPiece::L_LEFT_HIGH = 31;
 const int ChessPiece::L_LEFT_LOW = 14;
 const int ChessPiece::L_RIGHT_HIGH = 33;
 const int ChessPiece::L_RIGHT_LOW = 18;
+const int ChessPiece::JUMP = 0;
 
 ChessPiece::ChessPiece(Color _color)
   : color(_color)
@@ -71,15 +72,36 @@ bool ChessPiece::routeBlocked(int source, int destination, ChessPiece **board)
   return false;
 }
 
+vector<int> ChessPiece::generateMoves(int source, ChessPiece **board)
+{
+  // Generate a vector containing every possible square this piece can move to
+  // Radiate out, stopping if it reaches the edge of the board, or an occupied square
+  vector<int> result;
+  vector<int> possDirs = getPossDirs();
+  for (vector<int>::iterator it = possDirs.begin(); it != possDirs.end(); ++it)
+    {
+      for (int i = source; !(i & 0x88) && board[i] == NULL; i += *it)
+	{
+	  result.push_back(i);
+	}
+    }
+  return result;
+}
+
+vector<int> ChessPiece::getPossDirs() const
+{
+  return possDirs;
+}
+
 int ChessPiece::getDirection(int source, int destination) const
 {
-  if (!(abs(destination - source) % VERTICAL))
+  if (abs(destination - source) % VERTICAL == 0)
     return VERTICAL;
-  else if (!(abs(destination - source) % DIAGONAL))
+  else if (abs(destination - source) % DIAGONAL == 0)
     return DIAGONAL;
-  else if (!(abs(destination-source) % ANTIDIAGONAL))
+  else if (abs(destination-source) % ANTIDIAGONAL == 0)
     return ANTIDIAGONAL;
-  else if (!(abs(destination-source) < HORIZONTAL))
+  else if (abs(destination-source) < HORIZONTAL)
     return 1;
   else
     return -1; //ERROR
@@ -93,5 +115,11 @@ ChessPiece::Color ChessPiece::getColor() const
 ostream &operator<<(ostream &out, const ChessPiece &cp)
 {
   cp.output(out);
+  return out;
+}
+
+ostream &ChessPiece::operator>>(ostream &out) const
+{
+  outputS(out);
   return out;
 }

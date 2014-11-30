@@ -15,7 +15,7 @@
 
 #include "ChessPiece.hpp"
 
-class ChessPiece;
+//class ChessPiece;
 
 class ChessBoard
 {
@@ -30,12 +30,18 @@ public:
 private:
   ChessPiece **board;
   int moveCounter;
+  int whitePieceLocs[16];
+  int blackPieceLocs[16];
 
   bool initBoard();
   bool deleteBoard();
   bool initPieces();
   int parse(std::string square);
   ChessPiece::Color moveColor();
+  void updateLocationArray(int *&locArray, int source, int dest);
+  bool checkForCheck(int source, int dest, int *&pieces, int kingLoc);
+  bool checkForCheck(int source, int *&pieces, int kingLoc);
+  bool checkForLegalMoves(int *&player, int *&opponent);
 
 };
 

@@ -11,6 +11,7 @@
 *****************************************************/
 
 #include <iostream>
+#include <vector>
 
 #include "ChessBoard.hpp"
 #include "ChessPiece.hpp"
@@ -41,6 +42,21 @@ bool ChessBoard::submitMove(string source, string dest)
   // and check if the input was valid
   int intSource = parse(source);
   int intDest = parse(dest);
+  int *player;
+  int *opponent;
+  switch (moveColor())
+    {
+    case ChessPiece::WHITE:
+      player = whitePieceLocs;
+      opponent = blackPieceLocs;
+      break;
+    case ChessPiece::BLACK:
+      player = blackPieceLocs;
+      opponent = whitePieceLocs;
+      break;
+    default:
+      break;
+    }
   if (intSource == -1 || intDest == -1)
     {
       cout << "Error! Invalid move submitted!" << endl;
@@ -72,7 +88,8 @@ bool ChessBoard::submitMove(string source, string dest)
     }
 
   // Let's see if there are any obstructions to the move, or if it's in a valid direction
-  if (board[intSource]->canMove(intSource, intDest, board))
+  // A piece also can't move if it will result in leaving its own king in check
+  if (board[intSource]->canMove(intSource, intDest, board) && !checkForCheck(intSource, intDest, opponent, player[15]))
     {
       cout << (moveColor() == ChessPiece::WHITE ? "White" : "Black") << "'s " << *board[intSource] << " moves from " << source << " to " << dest;
       //TODO: if we're taking someone, delete their memory
@@ -80,7 +97,9 @@ bool ChessBoard::submitMove(string source, string dest)
 	{
 	  cout << " taking " << (moveColor() == ChessPiece::WHITE ? "Black" : "White") << "'s " << *board[intDest];
 	  delete board[intDest];
+	  updateLocationArray(opponent, intDest, -1);
 	}
+      updateLocationArray(player, intSource, intDest);
       board[intDest] = board[intSource];
       board[intSource] = NULL;
       moveCounter++;
@@ -93,8 +112,21 @@ bool ChessBoard::submitMove(string source, string dest)
     }
 
   // Now check for Check/Checkmate/Stalemate
+  if (checkForCheck(intDest, player, opponent[15]))
+    {
+      cout << (moveColor() == ChessPiece::WHITE ? "White" : "Black") << " is in check";
+      if (!checkForLegalMoves(opponent, player))
+	{
+	  cout << "mate";
+	} 
+      cout << endl;
+    }
+  else if (!checkForLegalMoves(opponent, player))
+    {
+      cout << "Stalemate" << endl;
+    }
 
-  printBoard();
+  //printBoard();
   return true;
 }
 
@@ -118,6 +150,84 @@ ChessPiece::Color ChessBoard::moveColor()
     return ChessPiece::WHITE;
   else
     return ChessPiece::BLACK;
+}
+
+void ChessBoard::updateLocationArray(int *&locArray, int source, int dest)
+{
+  for (int i = 0; i < 16; i++) //magic number
+    {
+      if (locArray[i] == source)
+	{	
+	  locArray[i] = dest;
+	  return;
+	}
+    }
+
+  return;
+}
+
+bool ChessBoard::checkForCheck(int source, int dest, int *&pieces, int kingLoc)
+{
+  // Temporarily move the piece
+  // It doesn't count as a move if you leave your finger on it!
+  ChessPiece *temp = board[dest];
+  board[dest] = board[source];
+  board[source] = NULL;
+
+  // Run through all of the pieces, checking if they attack the king
+  for (int i = 0; i < 16; i++) //magic number
+    {
+      if (pieces[i] != -1 && pieces[i] != dest && board[pieces[i]]->canMove(pieces[i], kingLoc, board))
+	{
+	  // Put the pieces back where they were
+	  board[source] = board[dest];
+	  board[dest] = temp;
+	  return true;
+	}
+    }
+
+  // Put the pieces back where they were
+  board[source] = board[dest];
+  board[dest] = temp;
+  return false;
+}
+
+
+bool ChessBoard::checkForCheck(int source, int *&pieces, int kingLoc)
+{
+
+  // Run through all of the pieces, checking if they attack the king
+  for (int i = 0; i < 16; i++) //magic number
+    {
+      if (pieces[i] != -1 && board[pieces[i]]->canMove(pieces[i], kingLoc, board))
+	{
+	  return true;
+	}
+    }
+
+  return false;
+}
+
+
+bool ChessBoard::checkForLegalMoves(int *&player, int *&opponent)
+{
+  // Loop over all of the pieces, checking if any of them can make a legal move
+  // (i.e. one that doesn't result in check). If so return true, else return false
+  for (int i = 0; i < 16; i++) //magic number
+    {
+      if (player[i] != -1)
+	{
+	  vector<int> possDests = board[player[i]]->generateMoves(player[i], board);
+	  for (vector<int>::iterator it = possDests.begin(); it != possDests.end(); ++it)
+	    {
+	      if (!checkForCheck(player[i], *it, opponent, player[15]))
+		{
+		  return true;
+		}
+	    }
+	}
+    }
+  return false;
 }
 
 bool ChessBoard::initBoard()
@@ -159,6 +269,42 @@ bool ChessBoard::initBoard()
   board[117] = new bishop(ChessPiece::BLACK);
   board[118] = new knight(ChessPiece::BLACK);
   board[119] = new rook(ChessPiece::BLACK);
+
+  // We can set up the pieces array too.  Ordered by most powerful piece.
+  whitePieceLocs[0] = 3; // Queen
+  whitePieceLocs[1] = 0; // Rook
+  whitePieceLocs[2] = 7; // Rook
+  whitePieceLocs[3] = 2; // Bishop
+  whitePieceLocs[4] = 5; // Bishop
+  whitePieceLocs[5] = 1; // Knight
+  whitePieceLocs[6] = 6; // Knight
+  whitePieceLocs[7] = 16; // Pawn
+  whitePieceLocs[8] = 17; // Pawn
+  whitePieceLocs[9] = 18; // Pawn
+  whitePieceLocs[10] = 19; // Pawn
+  whitePieceLocs[11] = 20; // Pawn
+  whitePieceLocs[12] = 21; // Pawn
+  whitePieceLocs[13] = 22; // Pawn
+  whitePieceLocs[14] = 23; // Pawn
+  whitePieceLocs[15] = 4; // King
+
+  blackPieceLocs[0] = 115; // Queen
+  blackPieceLocs[1] = 112; // Rook
+  blackPieceLocs[2] = 119; // Rook
+  blackPieceLocs[3] = 114; // Bishop
+  blackPieceLocs[4] = 117; // Bishop
+  blackPieceLocs[5] = 113; // Knight
+  blackPieceLocs[6] = 118; // Knight
+  blackPieceLocs[7] = 96; // Pawn
+  blackPieceLocs[8] = 97; // Pawn
+  blackPieceLocs[9] = 98; // Pawn
+  blackPieceLocs[10] = 99; // Pawn
+  blackPieceLocs[11] = 100; // Pawn
+  blackPieceLocs[12] = 101; // Pawn
+  blackPieceLocs[13] = 102; // Pawn
+  blackPieceLocs[14] = 103; // Pawn
+  blackPieceLocs[15] = 116; // King
+
   return true;
 }
 
@@ -191,20 +337,54 @@ ChessPiece **ChessBoard::getBoard()
 
 void ChessBoard::printBoard()
 {
-  cout << "   ---------------------------------" << endl;
+  cout << "   "
+       << "\u250c\u2500\u2500\u2500\u252c"
+       << "\u2500\u2500\u2500\u252c"
+       << "\u2500\u2500\u2500\u252c"
+       << "\u2500\u2500\u2500\u252c"
+       << "\u2500\u2500\u2500\u252c"
+       << "\u2500\u2500\u2500\u252c"
+       << "\u2500\u2500\u2500\u252c"
+       << "\u2500\u2500\u2500\u2510"
+       << endl;
   for (int i = 7; i >= 0; i--)
     {
-      cout << i+1 << "  |";
+      cout << i+1 << "  \u2502";
       for (int j = 0; j < 8; j++)
 	{
 	  if (board[i*16+j] != NULL)
-	    cout << " " << *board[i*16+j] << " ";
+	    {
+	      cout << " ";
+	      *board[i*16+j] >> cout << " ";
+	    }
 	  else
 	    cout << "   ";
-	  cout << "|";
+	  cout << "\u2502";
 	}
-      cout << endl << "   ---------------------------------" << endl;
+      if (i > 0)
+	{
+	  cout << endl << "   "
+	       << "\u251c\u2500\u2500\u2500\u253c"
+	       << "\u2500\u2500\u2500\u253c"
+	       << "\u2500\u2500\u2500\u253c"
+	       << "\u2500\u2500\u2500\u253c"
+	       << "\u2500\u2500\u2500\u253c"
+	       << "\u2500\u2500\u2500\u253c"
+	       << "\u2500\u2500\u2500\u253c"
+	       << "\u2500\u2500\u2500\u2524"
+	       << endl;
+	}
     }
+  cout << endl << "   "
+       << "\u2514\u2500\u2500\u2500\u2534"
+       << "\u2500\u2500\u2500\u2534"
+       << "\u2500\u2500\u2500\u2534"
+       << "\u2500\u2500\u2500\u2534"
+       << "\u2500\u2500\u2500\u2534"
+       << "\u2500\u2500\u2500\u2534"
+       << "\u2500\u2500\u2500\u2534"
+       << "\u2500\u2500\u2500\u2518"
+       << endl;
   cout << "     A   B   C   D   E   F   G   H" << endl;
 
   return;

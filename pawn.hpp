@@ -16,13 +16,15 @@
 class pawn : public ChessPiece
 {
 public:
-  pawn(Color _color) : ChessPiece(_color){}
+  pawn(Color _color);
   bool canMove(int source, int destination, ChessPiece **board);
+  std::vector<int> generateMoves(int source, ChessPiece **board);
 
 private:
   bool validDirection(int source, int destination);
   //int getDirection(int source, int destination) const;
   std::ostream &output(std::ostream &out) const;
+  std::ostream &outputS(std::ostream &out) const;
 };
 
 #endif
