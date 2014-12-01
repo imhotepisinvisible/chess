@@ -23,13 +23,20 @@ king::king(Color _color)
 {
   possDirs.push_back(VERTICAL);
   possDirs.push_back(-VERTICAL);
+  possDirs.push_back(DIAGONAL);
+  possDirs.push_back(-DIAGONAL);
+  possDirs.push_back(ANTIDIAGONAL);
+  possDirs.push_back(-ANTIDIAGONAL);
   possDirs.push_back(1);
   possDirs.push_back(-1);
 }
 
-bool king::validDirection(int source, int destination)
+bool king::validDirection(int source, int destination) const
 {
-  return (abs(destination - source) == VERTICAL || abs(destination - source) == DIAGONAL || abs(destination - source) == ANTIDIAGONAL || abs(destination - source) == 1);
+  return (abs(destination - source) == VERTICAL
+	  || abs(destination - source) == DIAGONAL
+	  || abs(destination - source) == ANTIDIAGONAL
+	  || abs(destination - source) == 1);
 }
 
 vector<int> king::generateMoves(int source, ChessPiece **board)
@@ -47,16 +54,6 @@ vector<int> king::generateMoves(int source, ChessPiece **board)
     }
   return result;
 }
-
-/*int king::getDirection(int source, int destination) const
-{
-  if (!(abs(destination - source) % VERTICAL))
-    return VERTICAL;
-  else if (abs(destination-source) == 1)
-    return 1;
-  else
-    return -1;
-    }*/
 
 ostream &king::output(ostream &out) const
 {

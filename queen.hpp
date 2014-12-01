@@ -19,8 +19,7 @@ public:
   queen(Color _color);
 
 private:
-  bool validDirection(int source, int destination);
-  //int getDirection(int source, int destination) const;
+  bool validDirection(int source, int destination) const;
   std::ostream &output(std::ostream &out) const;
   std::ostream &outputS(std::ostream &out) const;
 };

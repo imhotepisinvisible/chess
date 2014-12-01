@@ -27,44 +27,11 @@ bishop::bishop(Color _color)
   possDirs.push_back(-ANTIDIAGONAL);
 }
 
-bool bishop::validDirection(int source, int destination)
+bool bishop::validDirection(int source, int destination) const
 {
-  return (abs(destination - source) % DIAGONAL == 0 || abs(destination-source) % ANTIDIAGONAL == 0);
+  return (abs(destination - source) % DIAGONAL == 0
+	  || abs(destination-source) % ANTIDIAGONAL == 0);
 }
-
-/*vector<int> bishop::generateMoves(int source, ChessPiece **board)
-{
-  // Generate a vector containing every possible square this piece can move to
-  // Radiate out, stopping if it reaches the edge of the board, or an occupied square
-  vector<int> result;
-  for (int i = source; !(i & 0x88) && board[i] != NULL; i += DIAGONAL)
-    {
-      result.push_back(i);
-    }
-  for (int i = source; !(i & 0x88) && board[i] != NULL; i -= DIAGONAL)
-    {
-      result.push_back(i);
-    }
-  for (int i = source; !(i & 0x88) && board[i] != NULL; i += ANTIDIAGONAL)
-    {
-      result.push_back(i);
-    }
-  for (int i = source; !(i & 0x88) && board[i] != NULL; i -= ANTIDIAGONAL)
-    {
-      result.push_back(i);
-    }
-  return result;
-}
-
-int bishop::getDirection(int source, int destination) const
-{
-  if (!(abs(destination - source) % DIAGONAL))
-    return DIAGONAL;
-  else if (!(abs(destination-source) % ANTIDIAGONAL))
-    return ANTIDIAGONAL;
-  else
-    return -1;
-    }*/
 
 ostream &bishop::output(ostream &out) const
 {

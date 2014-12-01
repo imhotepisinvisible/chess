@@ -19,9 +19,8 @@ public:
   king(Color _color);
 
 private:
-  bool validDirection(int source, int destination);
+  bool validDirection(int source, int destination) const;
   std::vector<int> generateMoves(int source, ChessPiece **board);
-  //int getDirection(int source, int destination) const;
   std::ostream &output(std::ostream &out) const;
   std::ostream &outputS(std::ostream &out) const;
 };

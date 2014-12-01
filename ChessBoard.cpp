@@ -25,9 +25,8 @@
 using namespace std;
 
 ChessBoard::ChessBoard()
-  : moveCounter(0)
+  : moveCounter(0), gameOver(false)
 {
-  //initPieces();
   initBoard();
 }
 
@@ -38,31 +37,46 @@ ChessBoard::~ChessBoard()
 
 bool ChessBoard::submitMove(string source, string dest)
 {
+  //TODO: Castling, en passant, promotion, points counter, check for draw at 50
+  //non-eventful moves, check for draw at 3 identical moves
   // Turn the input string into an int that will index to our board
   // and check if the input was valid
   int intSource = parse(source);
   int intDest = parse(dest);
-  int *player;
-  int *opponent;
+  int *player, *opponent;
+  string playerColor, opponentColor;
+
+  // Initialize player/opponent vars
   switch (moveColor())
     {
     case ChessPiece::WHITE:
       player = whitePieceLocs;
       opponent = blackPieceLocs;
+      playerColor = "White";
+      opponentColor = "Black";
       break;
     case ChessPiece::BLACK:
       player = blackPieceLocs;
       opponent = whitePieceLocs;
+      playerColor = "Black";
+      opponentColor = "White";
       break;
     default:
       break;
     }
+
+  // Error checking
   if (intSource == -1 || intDest == -1)
     {
       cout << "Error! Invalid move submitted!" << endl;
       return false;
     }
-
+  // Check if the game is over
+  if (gameOver)
+    {
+      cout << "Error! The game is already over!" << endl;
+      return false;
+    }
   // Check if there's a piece at the source square
   if (board[intSource] == NULL)
     {
@@ -78,24 +92,20 @@ bool ChessBoard::submitMove(string source, string dest)
   // Check if it's the right color for the player
   if (board[intSource]->getColor() != moveColor())
     {
-      cout << "It is not " << (moveColor() == ChessPiece::WHITE ? "Black" : "White") <<  "'s turn to move!" << endl;
+      cout << "It is not " << opponentColor <<  "'s turn to move!" << endl;
       return false;
-    }
-  // Check if the destination square is already occupied by a piece of the same color
-  if (board[intDest] != NULL && board[intDest]->getColor() == moveColor())
-    {
-      cout << (moveColor() == ChessPiece::WHITE ? "White" : "Black") << "'s " << *board[intSource] << " cannot move to " << dest << "!" << endl;
     }
 
   // Let's see if there are any obstructions to the move, or if it's in a valid direction
   // A piece also can't move if it will result in leaving its own king in check
-  if (board[intSource]->canMove(intSource, intDest, board) && !checkForCheck(intSource, intDest, opponent, player[15]))
+  if (board[intSource]->canMove(intSource, intDest, board)
+      && !checkForCheck(intSource, intDest, opponent, player[15]))
     {
-      cout << (moveColor() == ChessPiece::WHITE ? "White" : "Black") << "'s " << *board[intSource] << " moves from " << source << " to " << dest;
-      //TODO: if we're taking someone, delete their memory
-      if (board[intDest] != NULL)
+      cout << playerColor << "'s " << *board[intSource] << " moves from " << source
+	   << " to " << dest;
+      if (board[intDest] != NULL) // Taking someone
 	{
-	  cout << " taking " << (moveColor() == ChessPiece::WHITE ? "Black" : "White") << "'s " << *board[intDest];
+	  cout << " taking " << opponentColor << "'s " << *board[intDest];
 	  delete board[intDest];
 	  updateLocationArray(opponent, intDest, -1);
 	}
@@ -107,30 +117,36 @@ bool ChessBoard::submitMove(string source, string dest)
     }
   else
     {
-      cout << (moveColor() == ChessPiece::WHITE ? "White" : "Black") << "'s " << *board[intSource] << " cannot move to " << dest << "!" << endl;
+      cout << playerColor << "'s " << *board[intSource] << " cannot move to "
+	   << dest << "!" << endl;
       return false;
     }
 
   // Now check for Check/Checkmate/Stalemate
   if (checkForCheck(intDest, player, opponent[15]))
     {
-      cout << (moveColor() == ChessPiece::WHITE ? "White" : "Black") << " is in check";
+      cout << opponentColor << " is in check";
       if (!checkForLegalMoves(opponent, player))
 	{
 	  cout << "mate";
+	  gameOver = true;
 	} 
       cout << endl;
     }
   else if (!checkForLegalMoves(opponent, player))
     {
       cout << "Stalemate" << endl;
+      gameOver = true;
     }
 
-  //printBoard();
+#ifdef DEBUG
+  printBoard();
+#endif
+
   return true;
 }
 
-int ChessBoard::parse(string square)
+int ChessBoard::parse(string square) const
 {
   if (square.length() != 2)
     return -1;
@@ -144,7 +160,7 @@ int ChessBoard::parse(string square)
   return (rank*16 + file);
 }
 
-ChessPiece::Color ChessBoard::moveColor()
+ChessPiece::Color ChessBoard::moveColor() const
 {
   if (moveCounter % 2 == 0)
     return ChessPiece::WHITE;
@@ -166,7 +182,7 @@ void ChessBoard::updateLocationArray(int *&locArray, int source, int dest)
   return;
 }
 
-bool ChessBoard::checkForCheck(int source, int dest, int *&pieces, int kingLoc)
+bool ChessBoard::checkForCheck(int source, int dest, int *&pieces, int kingLoc) const
 {
   // Temporarily move the piece
   // It doesn't count as a move if you leave your finger on it!
@@ -174,10 +190,15 @@ bool ChessBoard::checkForCheck(int source, int dest, int *&pieces, int kingLoc)
   board[dest] = board[source];
   board[source] = NULL;
 
+  // If we're trying to move the king, move the king's location too!
+  if (source == kingLoc)
+    kingLoc = dest;
+
   // Run through all of the pieces, checking if they attack the king
   for (int i = 0; i < 16; i++) //magic number
     {
-      if (pieces[i] != -1 && pieces[i] != dest && board[pieces[i]]->canMove(pieces[i], kingLoc, board))
+      if (pieces[i] != -1 && pieces[i] != dest
+	  && board[pieces[i]]->canMove(pieces[i], kingLoc, board))
 	{
 	  // Put the pieces back where they were
 	  board[source] = board[dest];
@@ -192,10 +213,8 @@ bool ChessBoard::checkForCheck(int source, int dest, int *&pieces, int kingLoc)
   return false;
 }
 
-
-bool ChessBoard::checkForCheck(int source, int *&pieces, int kingLoc)
+bool ChessBoard::checkForCheck(int source, int *&pieces, int kingLoc) const
 {
-
   // Run through all of the pieces, checking if they attack the king
   for (int i = 0; i < 16; i++) //magic number
     {
@@ -208,8 +227,7 @@ bool ChessBoard::checkForCheck(int source, int *&pieces, int kingLoc)
   return false;
 }
 
-
-bool ChessBoard::checkForLegalMoves(int *&player, int *&opponent)
+bool ChessBoard::checkForLegalMoves(int *&player, int *&opponent) const
 {
   // Loop over all of the pieces, checking if any of them can make a legal move
   // (i.e. one that doesn't result in check). If so return true, else return false
@@ -327,15 +345,17 @@ bool ChessBoard::resetBoard()
   deleteBoard();
   initBoard();
   moveCounter = 0;
+  gameOver = false;
   return true;
 }
 
-ChessPiece **ChessBoard::getBoard()
+ChessPiece **ChessBoard::getBoard() const
 {
   return board;
 }
 
-void ChessBoard::printBoard()
+#ifdef DEBUG
+void ChessBoard::printBoard() const
 {
   cout << "   "
        << "\u250c\u2500\u2500\u2500\u252c"
@@ -390,3 +410,4 @@ void ChessBoard::printBoard()
   return;
 
 }
+#endif

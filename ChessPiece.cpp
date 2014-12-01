@@ -36,18 +36,26 @@ ChessPiece::~ChessPiece()
 {
 }
 
-bool ChessPiece::canMove(int source, int destination, ChessPiece **board)
+bool ChessPiece::canMove(int source, int destination, ChessPiece **board) const
 {
+  // First check if the piece can even move in the direction vector
   if (!validDirection(source, destination))
     return false;
 
+  // Now check if the destination square is already occupied by a
+  // piece of the same color
+  if (board[destination] != NULL
+      && board[destination]->getColor() == board[source]->getColor())
+    return false;
+
+  // Now check if there are any obstructions to the destination
   if (routeBlocked(source, destination, board))
     return false;
 
   return true;
 }
 
-bool ChessPiece::routeBlocked(int source, int destination, ChessPiece **board)
+bool ChessPiece::routeBlocked(int source, int destination, ChessPiece **board) const
 {
   int direction = getDirection(source, destination);
   if (direction == 0)
@@ -118,8 +126,10 @@ ostream &operator<<(ostream &out, const ChessPiece &cp)
   return out;
 }
 
+#ifdef DEBUG
 ostream &ChessPiece::operator>>(ostream &out) const
 {
   outputS(out);
   return out;
 }
+#endif

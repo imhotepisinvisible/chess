@@ -31,10 +31,12 @@ knight::knight(Color _color)
   possDirs.push_back(-L_RIGHT_LOW);
 }
 
-bool knight::validDirection(int source, int destination)
+bool knight::validDirection(int source, int destination) const
 {
-  return (abs(destination - source) % L_LEFT_HIGH == 0 || abs(destination-source) % L_LEFT_LOW == 0
-	   || abs(destination - source) % L_RIGHT_HIGH == 0 || abs(destination-source) % L_RIGHT_LOW == 0);
+  return (abs(destination - source) % L_LEFT_HIGH == 0
+	  || abs(destination-source) % L_LEFT_LOW == 0
+	  || abs(destination - source) % L_RIGHT_HIGH == 0
+	  || abs(destination-source) % L_RIGHT_LOW == 0);
 }
 
 vector<int> knight::generateMoves(int source, ChessPiece **board)
@@ -55,7 +57,7 @@ vector<int> knight::generateMoves(int source, ChessPiece **board)
 
 int knight::getDirection(int source, int destination) const
 {
-  return JUMP; //MAGIC NUMBER = JUMP?
+  return JUMP;
 }
 
 ostream &knight::output(ostream &out) const

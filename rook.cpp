@@ -12,7 +12,6 @@
 
 #include <iostream>
 #include <cstdlib>
-#include <vector>
 
 #include "ChessPiece.hpp"
 #include "rook.hpp"
@@ -28,45 +27,11 @@ rook::rook(Color _color)
   possDirs.push_back(-1);
 }
 
-bool rook::validDirection(int source, int destination)
+bool rook::validDirection(int source, int destination) const
 {
-  return (abs(destination - source) % VERTICAL == 0 || abs(destination-source) < HORIZONTAL);
+  return (abs(destination - source) % VERTICAL == 0
+	  || abs(destination-source) < HORIZONTAL);
 }
-
-/*vector<int> rook::generateMoves(int source, ChessPiece **board)
-{
-  // Generate a vector containing every possible square this piece can move to
-  // Radiate out, stopping if it reaches the edge of the board, or an occupied square
-  vector<int> result;
-  for (int i = source; !(i & 0x88) && board[i] != NULL; i += VERTICAL)
-    {
-      result.push_back(i);
-    }
-  for (int i = source; !(i & 0x88) && board[i] != NULL; i -= VERTICAL)
-    {
-      result.push_back(i);
-    }
-  for (int i = source; !(i & 0x88) && board[i] != NULL; i++)
-    {
-      result.push_back(i);
-    }
-  for (int i = source; !(i & 0x88) && board[i] != NULL; i--)
-    {
-      result.push_back(i);
-    }
-  return result;
-}
-
-int rook::getDirection(int source, int destination) const
-{
-  if (!(abs(destination - source) % VERTICAL))
-    return VERTICAL;
-  else if (!(abs(destination-source) < HORIZONTAL))
-    return 1;
-  else
-    return -1;
-    }*/
-
 
 ostream &rook::output(ostream &out) const
 {

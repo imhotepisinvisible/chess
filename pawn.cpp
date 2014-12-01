@@ -23,24 +23,36 @@ pawn::pawn(Color _color)
   possDirs.push_back(VERTICAL);
   possDirs.push_back(DIAGONAL);
   possDirs.push_back(ANTIDIAGONAL);
+  possDirs.push_back(-VERTICAL);
+  possDirs.push_back(-DIAGONAL);
+  possDirs.push_back(-ANTIDIAGONAL);
 }
 
-bool pawn::validDirection(int source, int destination)
+bool pawn::validDirection(int source, int destination) const
 {
   if (color == WHITE)
-    return ((destination - source) == VERTICAL || (source >= 16 && source <= 23 && (destination - source) == VERTICAL*2) || (destination - source) == DIAGONAL || (destination - source) == ANTIDIAGONAL);
+    return ((destination - source) == VERTICAL 
+	    || (source >= 16 && source <= 23 && (destination - source) == VERTICAL*2)
+	    || (destination - source) == DIAGONAL
+	    || (destination - source) == ANTIDIAGONAL);
   else
-    return ((source - destination) == VERTICAL || (source >= 96 && source <= 103 && (source - destination) == VERTICAL*2) || (source - destination) == DIAGONAL || (source - destination) == ANTIDIAGONAL);
+    return ((source - destination) == VERTICAL
+	    || (source >= 96 && source <= 103 && (source - destination) == VERTICAL*2)
+	    || (source - destination) == DIAGONAL
+	    || (source - destination) == ANTIDIAGONAL);
 }
 
-bool pawn::canMove(int source, int destination, ChessPiece **board)
+bool pawn::canMove(int source, int destination, ChessPiece **board) const
 {
   if (!validDirection(source, destination))
     return false;
 
-  if (board[destination] != NULL && getDirection(source, destination) != DIAGONAL && getDirection(source, destination) != ANTIDIAGONAL)
+  if (board[destination] != NULL
+      && getDirection(source, destination) != DIAGONAL
+      && getDirection(source, destination) != ANTIDIAGONAL)
     return false;
-  else if (board[destination] == NULL && getDirection(source, destination) != VERTICAL)
+  else if (board[destination] == NULL
+	   && getDirection(source, destination) != VERTICAL)
     return false;
 
   return true;
@@ -55,20 +67,27 @@ vector<int> pawn::generateMoves(int source, ChessPiece **board)
     {
       if (source >=16 && source <=23)
 	{
-	  if (!((source + VERTICAL*2) & 0x88) && board[source + VERTICAL] == NULL && board[source + VERTICAL*2] == NULL)
+	  if (!((source + VERTICAL*2) & 0x88)
+	      && board[source + VERTICAL] == NULL
+	      && board[source + VERTICAL*2] == NULL)
 	    {
 	      result.push_back(source + VERTICAL*2);
 	    }
 	}
-      if (!((source + VERTICAL) & 0x88) && board[source + VERTICAL] == NULL)
+      if (!((source + VERTICAL) & 0x88)
+	  && board[source + VERTICAL] == NULL)
 	{
 	  result.push_back(source + VERTICAL);
 	}
-      if (!((source + DIAGONAL) & 0x88) && board[source + DIAGONAL] != NULL && board[source + DIAGONAL]->getColor() == BLACK)
+      if (!((source + DIAGONAL) & 0x88)
+	  && board[source + DIAGONAL] != NULL
+	  && board[source + DIAGONAL]->getColor() == BLACK)
 	{
 	  result.push_back(source + DIAGONAL);
 	}
-      if (!((source + ANTIDIAGONAL) & 0x88) && board[source + ANTIDIAGONAL] != NULL && board[source + ANTIDIAGONAL]->getColor() == BLACK)
+      if (!((source + ANTIDIAGONAL) & 0x88)
+	  && board[source + ANTIDIAGONAL] != NULL
+	  && board[source + ANTIDIAGONAL]->getColor() == BLACK)
 	{
 	  result.push_back(source + ANTIDIAGONAL);
 	}
@@ -77,32 +96,33 @@ vector<int> pawn::generateMoves(int source, ChessPiece **board)
     {
       if (source >= 96 && source <= 103)
 	{
-	  if (!((source - VERTICAL*2) & 0x88) && board[source - VERTICAL] == NULL && board[source - VERTICAL*2] == NULL)
+	  if (!((source - VERTICAL*2) & 0x88)
+	      && board[source - VERTICAL] == NULL
+	      && board[source - VERTICAL*2] == NULL)
 	    {
 	      result.push_back(source - VERTICAL*2);
 	    }
 	}
-      if (!((source - VERTICAL) & 0x88) && board[source - VERTICAL] == NULL)
+      if (!((source - VERTICAL) & 0x88)
+	  && board[source - VERTICAL] == NULL)
 	{
 	  result.push_back(source - VERTICAL);
 	}
-      if (!((source - DIAGONAL) & 0x88) && board[source - DIAGONAL] != NULL && board[source - DIAGONAL]->getColor() == WHITE)
+      if (!((source - DIAGONAL) & 0x88)
+	  && board[source - DIAGONAL] != NULL
+	  && board[source - DIAGONAL]->getColor() == WHITE)
 	{
 	  result.push_back(source - DIAGONAL);
 	}
-      if (!((source - ANTIDIAGONAL) & 0x88) && board[source - ANTIDIAGONAL] != NULL && board[source - ANTIDIAGONAL]->getColor() == WHITE)
+      if (!((source - ANTIDIAGONAL) & 0x88)
+	  && board[source - ANTIDIAGONAL] != NULL
+	  && board[source - ANTIDIAGONAL]->getColor() == WHITE)
 	{
 	  result.push_back(source - ANTIDIAGONAL);
 	}
     }
   return result;
 }
-
-
-/*int pawn::getDirection(int source, int destination) const
-{
-  return VERTICAL;
-  }*/
 
 ostream &pawn::output(ostream &out) const
 {
