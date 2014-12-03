@@ -13,7 +13,6 @@
 #include <iostream>
 #include <cstdlib>
 
-#include "ChessPiece.hpp"
 #include "knight.hpp"
 
 using namespace std;
@@ -33,10 +32,10 @@ knight::knight(Color _color)
 
 bool knight::validDirection(int source, int destination) const
 {
-  return (abs(destination - source) % L_LEFT_HIGH == 0
-	  || abs(destination-source) % L_LEFT_LOW == 0
-	  || abs(destination - source) % L_RIGHT_HIGH == 0
-	  || abs(destination-source) % L_RIGHT_LOW == 0);
+  return (abs(destination - source) == L_LEFT_HIGH
+	  || abs(destination-source) == L_LEFT_LOW
+	  || abs(destination - source) == L_RIGHT_HIGH
+	  || abs(destination-source) == L_RIGHT_LOW);
 }
 
 vector<int> knight::generateMoves(int source, ChessPiece **board)
@@ -47,7 +46,9 @@ vector<int> knight::generateMoves(int source, ChessPiece **board)
   vector<int> possDirs = getPossDirs();
   for (vector<int>::iterator it = possDirs.begin(); it != possDirs.end(); ++it)
     {
-      if (!((source + *it) & 0x88) && board[source + *it] == NULL)
+      if (!((source + *it) & 0x88)
+	  && (board[source + *it] == NULL
+	      || (board[source + *it] != NULL && board[source + *it]->getColor() != color)))
 	{
 	  result.push_back(source + *it);
 	}

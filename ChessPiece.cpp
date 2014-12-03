@@ -18,7 +18,7 @@
 using namespace std;
 
 const int ChessPiece::VERTICAL = 16;
-const int ChessPiece::HORIZONTAL = 8; //check this!
+const int ChessPiece::HORIZONTAL = 8;
 const int ChessPiece::DIAGONAL = 17;
 const int ChessPiece::ANTIDIAGONAL = 15;
 const int ChessPiece::L_LEFT_HIGH = 31;
@@ -28,7 +28,7 @@ const int ChessPiece::L_RIGHT_LOW = 18;
 const int ChessPiece::JUMP = 0;
 
 ChessPiece::ChessPiece(Color _color)
-  : color(_color)
+  : color(_color), moved(false)
 {
 }
 
@@ -57,11 +57,15 @@ bool ChessPiece::canMove(int source, int destination, ChessPiece **board) const
 
 bool ChessPiece::routeBlocked(int source, int destination, ChessPiece **board) const
 {
+  // Loop over a route checking if there is anything in the way
+  // If the piece can jump then it is never blocked
   int direction = getDirection(source, destination);
-  if (direction == 0)
+
+  if (direction == JUMP)
     return false;
+
   int squares = abs(source - destination) / direction;
-  if (squares > 1 && direction > 1)
+  if (squares > 1 && direction >= 1)
     {
       for (int i = 1; i < squares; i++)
 	{
@@ -88,9 +92,17 @@ vector<int> ChessPiece::generateMoves(int source, ChessPiece **board)
   vector<int> possDirs = getPossDirs();
   for (vector<int>::iterator it = possDirs.begin(); it != possDirs.end(); ++it)
     {
-      for (int i = source; !(i & 0x88) && board[i] == NULL; i += *it)
+      for (int i = source+*it; !(i & 0x88); i += *it)
 	{
-	  result.push_back(i);
+	  if (board[i] == NULL)
+	    result.push_back(i);
+	  else
+	    {
+	      if (board[i]->getColor() != color)
+		  result.push_back(i);
+
+	      break;
+	    }
 	}
     }
   return result;
@@ -118,6 +130,22 @@ int ChessPiece::getDirection(int source, int destination) const
 ChessPiece::Color ChessPiece::getColor() const
 {
   return color;
+}
+
+void ChessPiece::setMoved()
+{
+  moved = true;
+  return;
+}
+
+bool ChessPiece::getMoved() const
+{
+  return moved;
+}
+
+bool ChessPiece::canCastle(int source, int destination, ChessPiece **board) const
+{
+  return false;
 }
 
 ostream &operator<<(ostream &out, const ChessPiece &cp)

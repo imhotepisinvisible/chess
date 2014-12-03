@@ -12,7 +12,6 @@
 
 #include <iostream>
 
-#include "ChessPiece.hpp"
 #include "pawn.hpp"
 
 using namespace std;

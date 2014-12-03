@@ -18,28 +18,102 @@
 class ChessBoard
 {
 public:
+  // Constructor. Initialize board, counter and game over state
   ChessBoard();
+
+  // Destructor. Deallocate memory allocated for the board and pieces
   ~ChessBoard();
-  ChessPiece **getBoard() const;
+
+  // Processes a move.  Returns true if the move succeeds, false if the move fails
   bool submitMove(std::string source, std::string dest);
+
+  // Resets the board to its initial state.  Returns false if memory can't be
+  // allocated for any reason
   bool resetBoard();
 
 private:
+  // The board array.  Using an 0x88 board (a one dimensional array of length 128)
+  // because of the nice ability it gives you in generating moves and checking
+  // for invalid input by doing a bitwise AND with 0x88
+  // http://web.archive.org/web/20071026130204/http://www.seanet.com/~brucemo/topics/0x88.htm
   ChessPiece **board;
+
+  // Counts the number of moves (by black and white combined) in the game
+  // You can deduce whose turn it is by doing modulo-2 on this number
   int moveCounter;
+
+  // An integer array of the location of all the white pieces on the board
   int whitePieceLocs[16];
+
+  // An integer array of the location of all the black pieces on the board
   int blackPieceLocs[16];
+
+  // Boolean flag to determine if the game has finished or not
   bool gameOver;
 
+  // Boolean flag to determine if a specific move is an attempted castle
+  bool castleAttempt;
+
+  // Pointer to the location array of the current player's pieces
+  int *player;
+
+  // Pointer to the location array of the current opponent's pieces
+  int *opponent;
+
+  // String of the current player's color
+  std::string playerColor;
+
+  // String of the current opponent's color
+  std::string opponentColor;
+
+  // Initialize the board.  Returns false if memory can't be allocated for
+  // any reason.  Sets up the pieces on the board array and their locations
+  // in the location arrays.  Anywhere without a piece on the board is NULL
   bool initBoard();
-  bool deleteBoard();
-  bool initPieces();
+
+  // Deallocate all memory given to the pieces and the board
+  void deleteBoard();
+
+  // Parse an input string into an integer referring to an index on my board
+  // Returns -1 on bad input
   int parse(std::string square) const;
+
+  // Returns the color of the current move's player
   ChessPiece::Color moveColor() const;
+
+  // Updates either the player or opponent's location array, changing the
+  // source location to the dest location
   void updateLocationArray(int *&locArray, int source, int dest);
-  bool checkForCheck(int source, int dest, int *&pieces, int kingLoc) const;
-  bool checkForCheck(int source, int *&pieces, int kingLoc) const;
-  bool checkForLegalMoves(int *&player, int *&opponent) const;
+
+  // Overloaded function.  The first one tests a move from source to dest
+  // and returns true if it will result in the king being in check.
+  // The second returns true if the king is in check in the current board state
+  // kingLoc is the location of the king, pieces is the location array of the
+  // opposing player
+  bool inCheck(int source, int dest, int *&pieces, int kingLoc) const;
+  bool inCheck(int *&pieces, int kingLoc) const;
+
+  // Loops over every piece checking if it can make a legal move (i.e. a move
+  // that doesn't result in one's king being in check).  Returns true if this
+  // is possible, false if not
+  bool legalMovesExist(int *&player, int *&opponent) const;
+
+  // Processes a castle move, either king side or queen side.  Returns true
+  // if the castle is possible, false if not, i.e. if the king has not moved,
+  // the rook it is swapping with has not moved, the route is not blocked,
+  // and the king is not in check, will not move through check and will not
+  // end up in check
+  bool castle(int source, int dest);
+
+  // Checks for errors on either the source or destination inputs.  Returns true
+  // on error, false on no error
+  bool inputError(int source, int dest) const;
+
+  // Sets up the pointers and string for the current move's player and opponent
+  void setupColors();
+
+  // Debug only.  Prints out the board so you can see the state of the game at a
+  // specified point
 #ifdef DEBUG
   void printBoard() const;
 #endif

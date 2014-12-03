@@ -13,7 +13,6 @@
 #include <iostream>
 #include <cstdlib>
 
-#include "ChessPiece.hpp"
 #include "queen.hpp"
 
 using namespace std;

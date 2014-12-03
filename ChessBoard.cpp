@@ -37,83 +37,51 @@ ChessBoard::~ChessBoard()
 
 bool ChessBoard::submitMove(string source, string dest)
 {
-  //TODO: Castling, en passant, promotion, points counter, check for draw at 50
+  //TODO: en passant, promotion, points counter, check for draw at 50
   //non-eventful moves, check for draw at 3 identical moves
+
   // Turn the input string into an int that will index to our board
   // and check if the input was valid
   int intSource = parse(source);
   int intDest = parse(dest);
-  int *player, *opponent;
-  string playerColor, opponentColor;
+
+  // Check for castling special cast
+  if ((intSource == 4 && (intDest == 6 || intDest == 2))
+       || (intSource == 116 && (intDest == 118 || intDest == 114)))
+    castleAttempt = true;
+  else
+    castleAttempt = false;
 
   // Initialize player/opponent vars
-  switch (moveColor())
-    {
-    case ChessPiece::WHITE:
-      player = whitePieceLocs;
-      opponent = blackPieceLocs;
-      playerColor = "White";
-      opponentColor = "Black";
-      break;
-    case ChessPiece::BLACK:
-      player = blackPieceLocs;
-      opponent = whitePieceLocs;
-      playerColor = "Black";
-      opponentColor = "White";
-      break;
-    default:
-      break;
-    }
+  setupColors();
 
-  // Error checking
-  if (intSource == -1 || intDest == -1)
-    {
-      cout << "Error! Invalid move submitted!" << endl;
+  if (inputError(intSource, intDest))
       return false;
-    }
-  // Check if the game is over
-  if (gameOver)
-    {
-      cout << "Error! The game is already over!" << endl;
-      return false;
-    }
-  // Check if there's a piece at the source square
-  if (board[intSource] == NULL)
-    {
-      cout << "There is no piece at position " << source << "!" << endl;
-      return false;
-    }
-  // Check if destination is different from source
-  if (intSource == intDest)
-    {
-      cout << "Destination must different from source" << endl;
-      return false;
-    }
-  // Check if it's the right color for the player
-  if (board[intSource]->getColor() != moveColor())
-    {
-      cout << "It is not " << opponentColor <<  "'s turn to move!" << endl;
-      return false;
-    }
 
   // Let's see if there are any obstructions to the move, or if it's in a valid direction
   // A piece also can't move if it will result in leaving its own king in check
-  if (board[intSource]->canMove(intSource, intDest, board)
-      && !checkForCheck(intSource, intDest, opponent, player[15]))
+  if (!castleAttempt && board[intSource]->canMove(intSource, intDest, board)
+      && !inCheck(intSource, intDest, opponent, player[15]))
     {
-      cout << playerColor << "'s " << *board[intSource] << " moves from " << source
-	   << " to " << dest;
-      if (board[intDest] != NULL) // Taking someone
-	{
-	  cout << " taking " << opponentColor << "'s " << *board[intDest];
-	  delete board[intDest];
-	  updateLocationArray(opponent, intDest, -1);
-	}
-      updateLocationArray(player, intSource, intDest);
-      board[intDest] = board[intSource];
-      board[intSource] = NULL;
+	  cout << playerColor << "'s " << *board[intSource] << " moves from " << source
+	       << " to " << dest;
+	  if (board[intDest] != NULL) // Taking someone
+	    {
+	      cout << " taking " << opponentColor << "'s " << *board[intDest];
+	      delete board[intDest];
+	      updateLocationArray(opponent, intDest, -1);
+	    }
+	  updateLocationArray(player, intSource, intDest);
+	  board[intSource]->setMoved();
+	  board[intDest] = board[intSource];
+	  board[intSource] = NULL;
+	  moveCounter++;
+	  cout << endl;
+    }
+  else if (castleAttempt && castle(intSource, intDest))
+    {
+      cout << playerColor << " castles" << endl;
       moveCounter++;
-      cout << endl;
     }
   else
     {
@@ -123,17 +91,17 @@ bool ChessBoard::submitMove(string source, string dest)
     }
 
   // Now check for Check/Checkmate/Stalemate
-  if (checkForCheck(intDest, player, opponent[15]))
+  if (inCheck(player, opponent[15]))
     {
       cout << opponentColor << " is in check";
-      if (!checkForLegalMoves(opponent, player))
+      if (!legalMovesExist(opponent, player))
 	{
 	  cout << "mate";
 	  gameOver = true;
 	} 
       cout << endl;
     }
-  else if (!checkForLegalMoves(opponent, player))
+  else if (!legalMovesExist(opponent, player))
     {
       cout << "Stalemate" << endl;
       gameOver = true;
@@ -148,15 +116,18 @@ bool ChessBoard::submitMove(string source, string dest)
 
 int ChessBoard::parse(string square) const
 {
+  // Check for errors in the input
   if (square.length() != 2)
     return -1;
-  if (square[0] < 'A' && square[0] > 'H')
+  if (square[0] < 'A' || square[0] > 'H')
     return -1;
-  if (square[1] < 1 && square[1] > 8)
+  if (square[1] < '1' || square[1] > '8')
     return -1;
+
   int file = square[0] - 'A';
   int rank = square[1] - '1';
 
+  // Multiply rank by 16 because of the 0x88 board and add the file
   return (rank*16 + file);
 }
 
@@ -182,7 +153,7 @@ void ChessBoard::updateLocationArray(int *&locArray, int source, int dest)
   return;
 }
 
-bool ChessBoard::checkForCheck(int source, int dest, int *&pieces, int kingLoc) const
+bool ChessBoard::inCheck(int source, int dest, int *&pieces, int kingLoc) const
 {
   // Temporarily move the piece
   // It doesn't count as a move if you leave your finger on it!
@@ -213,21 +184,19 @@ bool ChessBoard::checkForCheck(int source, int dest, int *&pieces, int kingLoc) 
   return false;
 }
 
-bool ChessBoard::checkForCheck(int source, int *&pieces, int kingLoc) const
+bool ChessBoard::inCheck(int *&pieces, int kingLoc) const
 {
   // Run through all of the pieces, checking if they attack the king
   for (int i = 0; i < 16; i++) //magic number
     {
       if (pieces[i] != -1 && board[pieces[i]]->canMove(pieces[i], kingLoc, board))
-	{
 	  return true;
-	}
     }
 
   return false;
 }
 
-bool ChessBoard::checkForLegalMoves(int *&player, int *&opponent) const
+bool ChessBoard::legalMovesExist(int *&player, int *&opponent) const
 {
   // Loop over all of the pieces, checking if any of them can make a legal move
   // (i.e. one that doesn't result in check). If so return true, else return false
@@ -238,21 +207,120 @@ bool ChessBoard::checkForLegalMoves(int *&player, int *&opponent) const
 	  vector<int> possDests = board[player[i]]->generateMoves(player[i], board);
 	  for (vector<int>::iterator it = possDests.begin(); it != possDests.end(); ++it)
 	    {
-	      if (!checkForCheck(player[i], *it, opponent, player[15]))
-		{
+	      if (!inCheck(player[i], *it, opponent, player[15]))
 		  return true;
-		}
 	    }
 	}
     }
   return false;
 }
 
+bool ChessBoard::castle(int source, int dest)
+{
+  if (board[source]->canCastle(source, dest, board)
+      && !inCheck(opponent, player[15])
+      && dest == source+2
+      && !inCheck(opponent, source+1)
+      && !inCheck(opponent, source+2)) // King side castle
+    {
+      updateLocationArray(player, source, source+2);
+      updateLocationArray(player, source+3, source+1);
+      board[source]->setMoved();
+      board[source+3]->setMoved();
+      board[source+2] = board[source];
+      board[source] = NULL;
+      board[source+1] = board[source+3];
+      board[source+3] = NULL;
+      return true;
+    }
+  else if (board[source]->canCastle(source, dest, board)
+	   && !inCheck(opponent, player[15])
+	   && dest == source-2
+	   && !inCheck(opponent, source-1)
+	   && !inCheck(opponent, source-2)) // Queen side castle
+    {
+      updateLocationArray(player, source, source-2);
+      updateLocationArray(player, source-4, source-1);
+      board[source]->setMoved();
+      board[source-4]->setMoved();
+      board[source-2] = board[source];
+      board[source] = NULL;
+      board[source-1] = board[source-4];
+      board[source-4] = NULL;
+      return true;
+    }
+  return false;
+}
+
+bool ChessBoard::inputError(int source, int dest) const
+{
+  // Check for an invalid move
+  if (source == -1 || dest == -1)
+    {
+      cout << "Error! Invalid move submitted!" << endl;
+      return true;
+    }
+  // Check if the game is over
+  if (gameOver)
+    {
+      cout << "Error! The game is already over!" << endl;
+      return true;
+    }
+  // Check if there's a piece at the source square
+  if (board[source] == NULL)
+    {
+      cout << "There is no piece at position "
+	   << (char)(source%8 + 'A') << (char)(source/16 + '1')
+	   << "!" << endl;
+      return true;
+    }
+  // Check if destination is different from source
+  if (source == dest)
+    {
+      cout << "Destination must be different from source" << endl;
+      return true;
+    }
+  // Check if it's the right color for the player
+  if (board[source]->getColor() != moveColor())
+    {
+      cout << "It is not " << opponentColor <<  "'s turn to move!" << endl;
+      return true;
+    }
+  return false;
+}
+
+void ChessBoard::setupColors()
+{
+  switch (moveColor())
+    {
+    case ChessPiece::WHITE:
+      player = whitePieceLocs;
+      opponent = blackPieceLocs;
+      playerColor = "White";
+      opponentColor = "Black";
+      break;
+    case ChessPiece::BLACK:
+      player = blackPieceLocs;
+      opponent = whitePieceLocs;
+      playerColor = "Black";
+      opponentColor = "White";
+      break;
+    default:
+      break;
+    }
+  return;
+}
+
 bool ChessBoard::initBoard()
 {
   cout << "A new chess game is started!" << endl;
   // Set up a fresh board.  Return false if it fails for some reason.
-  board = new ChessPiece*[128]; //TODO remove magic number, and do assertion (or (nothrow))
+  board = new (nothrow) ChessPiece*[128]; //TODO remove magic number, and do assertion (or (nothrow))
+  if (board == NULL)
+    {
+      cout << "Error allocating memory for ChessBoard" << endl;
+      return false;
+    }
   for (int i = 0; i < 128; i++)
     board[i] = NULL;
   board[0] = new rook(ChessPiece::WHITE);
@@ -326,7 +394,7 @@ bool ChessBoard::initBoard()
   return true;
 }
 
-bool ChessBoard::deleteBoard()
+void ChessBoard::deleteBoard()
 {
   for (int i = 0; i < 128; i++)
     {
@@ -337,21 +405,17 @@ bool ChessBoard::deleteBoard()
       }
     }
   delete [] board;
-  return true;
+  return;
 }
 
 bool ChessBoard::resetBoard()
 {
   deleteBoard();
-  initBoard();
+  if (!initBoard())
+    return false;
   moveCounter = 0;
   gameOver = false;
   return true;
-}
-
-ChessPiece **ChessBoard::getBoard() const
-{
-  return board;
 }
 
 #ifdef DEBUG

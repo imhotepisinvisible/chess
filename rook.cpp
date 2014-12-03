@@ -13,7 +13,6 @@
 #include <iostream>
 #include <cstdlib>
 
-#include "ChessPiece.hpp"
 #include "rook.hpp"
 
 using namespace std;

@@ -13,7 +13,6 @@
 #include <iostream>
 #include <cstdlib>
 
-#include "ChessPiece.hpp"
 #include "king.hpp"
 
 using namespace std;
@@ -39,6 +38,25 @@ bool king::validDirection(int source, int destination) const
 	  || abs(destination - source) == 1);
 }
 
+bool king::canCastle(int source, int destination, ChessPiece **board) const
+{
+  if (destination == source+2
+      && !getMoved()
+      && board[source+1] == NULL
+      && board[source+2] == NULL
+      && board[source+3] != NULL && !board[source+3]->getMoved()) // King side
+    return true;
+  else if (destination == source-2
+	   && !getMoved()
+	   && board[source-1] == NULL
+	   && board[source-2] == NULL
+	   && board[source-3] == NULL
+	   && board[source-4] != NULL && !board[source-4]->getMoved()) // Queen side
+    return true;
+
+  return false;
+}
+
 vector<int> king::generateMoves(int source, ChessPiece **board)
 {
   // Generate a vector containing every possible square this piece can move to
@@ -47,7 +65,9 @@ vector<int> king::generateMoves(int source, ChessPiece **board)
   vector<int> possDirs = getPossDirs();
   for (vector<int>::iterator it = possDirs.begin(); it != possDirs.end(); ++it)
     {
-      if (!((source + *it) & 0x88) && board[source + *it] == NULL)
+      if (!((source + *it) & 0x88)
+	  && (board[source + *it] == NULL
+	      || (board[source + *it] != NULL && board[source + *it]->getColor() != color)))
 	{
 	  result.push_back(source + *it);
 	}
