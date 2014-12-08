@@ -41,17 +41,17 @@ bool king::validDirection(int source, int destination) const
 bool king::canCastle(int source, int destination, ChessPiece **board) const
 {
   if (destination == source+2
-      && !getMoved()
+      && getNumMoves() == 0
       && board[source+1] == NULL
       && board[source+2] == NULL
-      && board[source+3] != NULL && !board[source+3]->getMoved()) // King side
+      && board[source+3] != NULL && board[source+3]->getNumMoves() == 0) // King side
     return true;
   else if (destination == source-2
-	   && !getMoved()
+	   && getNumMoves() == 0
 	   && board[source-1] == NULL
 	   && board[source-2] == NULL
 	   && board[source-3] == NULL
-	   && board[source-4] != NULL && !board[source-4]->getMoved()) // Queen side
+	   && board[source-4] != NULL && board[source-4]->getNumMoves() == 0) // Queen side
     return true;
 
   return false;

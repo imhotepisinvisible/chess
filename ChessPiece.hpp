@@ -9,7 +9,7 @@
 * Header file for ChessPiece class                  *
 *                                                   *
 *****************************************************/
-//#define DEBUG
+#define DEBUG
 
 #ifndef CHESSPIECE_H
 #define CHESSPIECE_H
@@ -42,15 +42,27 @@ public:
   // Returns the color of the piece
   Color getColor() const;
 
-  // Sets moved to true
-  void setMoved();
+  /*// Sets moved to true
+    void setMoved();*/
+  // TODO
+  ChessPiece &operator++();
 
   // Returns whether a piece has moved or not
-  bool getMoved() const;
+  int getNumMoves() const;
+
+  // TODO
+  void setFirstMoveNum(int moveCounter);
+  int getFirstMoveNum() const;
 
   // Returns true if a piece is able to castle, false if not.  All pieces other than king
   // will always return false
   virtual bool canCastle(int source, int destination, ChessPiece **board) const;
+
+  // TODO
+  virtual bool canEnPassant(int source, int dest, ChessPiece **board) const;
+
+  // TODO
+  virtual bool canPromote(int source) const;
 
   // Output operator outputs the name of the piece
   friend std::ostream &operator<<(std::ostream &out, const ChessPiece &cp);
@@ -75,8 +87,11 @@ protected:
   // The color of the piece
   Color color;
 
-  // Boolean flag that returns whether a piece has moved or not
-  bool moved;
+  // The number of moves an individual piece has made
+  int numMoves;
+
+  // The move number that a piece made its first move
+  int firstMoveNum;
 
   // Vector of possible directions a piece can move
   std::vector<int> possDirs;

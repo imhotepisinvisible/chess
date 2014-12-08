@@ -28,7 +28,7 @@ const int ChessPiece::L_RIGHT_LOW = 18;
 const int ChessPiece::JUMP = 0;
 
 ChessPiece::ChessPiece(Color _color)
-  : color(_color), moved(false)
+  : color(_color), numMoves(0), firstMoveNum(0)
 {
 }
 
@@ -132,18 +132,45 @@ ChessPiece::Color ChessPiece::getColor() const
   return color;
 }
 
-void ChessPiece::setMoved()
+/*void ChessPiece::setMoved()
 {
   moved = true;
   return;
+  }*/
+
+ChessPiece &ChessPiece::operator++()
+{
+  ++numMoves;
+  return *this;
 }
 
-bool ChessPiece::getMoved() const
+int ChessPiece::getNumMoves() const
 {
-  return moved;
+  return numMoves;
+}
+
+void ChessPiece::setFirstMoveNum(int moveCounter)
+{
+  firstMoveNum = moveCounter;
+  return;
+}
+
+int ChessPiece::getFirstMoveNum() const
+{
+  return firstMoveNum;
 }
 
 bool ChessPiece::canCastle(int source, int destination, ChessPiece **board) const
+{
+  return false;
+}
+
+bool ChessPiece::canEnPassant(int source, int dest, ChessPiece **board) const
+{
+  return false;
+}
+
+bool ChessPiece::canPromote(int source) const
 {
   return false;
 }

@@ -57,6 +57,29 @@ bool pawn::canMove(int source, int destination, ChessPiece **board) const
   return true;
 }
 
+bool pawn::canEnPassant(int source, int dest, ChessPiece **board) const
+{
+  if ((getDirection(source, dest) == DIAGONAL
+       || getDirection(source, dest) == ANTIDIAGONAL)
+      && board[dest] == NULL)
+    {
+      if (color == WHITE && source >= 64 && source <= 71)
+	    return true;
+      else if (color == BLACK && source >= 48 && source <= 55)
+	    return true;
+    }
+  return false;
+}
+
+bool pawn::canPromote(int source) const
+{
+  if (color == WHITE && source >= 96 && source <= 103)
+    return true;
+  else if (color == BLACK && source >= 16 && source <= 23)
+    return true;
+  return false;
+}
+
 vector<int> pawn::generateMoves(int source, ChessPiece **board)
 {
   // Generate a vector containing every possible square this piece can move to

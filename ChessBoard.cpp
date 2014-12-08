@@ -25,7 +25,7 @@
 using namespace std;
 
 ChessBoard::ChessBoard()
-  : moveCounter(0), gameOver(false)
+  : moveCounter(0), gameOver(false), pawnMoved(0), captureMade(0)
 {
   initBoard();
 }
@@ -35,58 +35,95 @@ ChessBoard::~ChessBoard()
   deleteBoard();
 }
 
-bool ChessBoard::submitMove(string source, string dest)
+bool ChessBoard::submitMove(string sourceStr, string destStr)
 {
-  //TODO: en passant, promotion, points counter, check for draw at 50
-  //non-eventful moves, check for draw at 3 identical moves
+  //TODO: points counter, check for draw at 3 identical moves,
+  // draw on impossibility of checkmate
+
+  char promoteTo;
+  if (destStr.length() == 3)
+    {
+      promoteTo = toupper(destStr[2]);
+      destStr = destStr.substr(0, 2);
+      promotionAttempt = true;
+    }
+  else
+    promotionAttempt = false;
 
   // Turn the input string into an int that will index to our board
   // and check if the input was valid
-  int intSource = parse(source);
-  int intDest = parse(dest);
-
-  // Check for castling special cast
-  if ((intSource == 4 && (intDest == 6 || intDest == 2))
-       || (intSource == 116 && (intDest == 118 || intDest == 114)))
-    castleAttempt = true;
-  else
-    castleAttempt = false;
+  int source = parse(sourceStr);
+  int dest = parse(destStr);
 
   // Initialize player/opponent vars
   setupColors();
 
-  if (inputError(intSource, intDest))
+  if (inputError(source, dest))
       return false;
+
+  // Check for castling special case
+  if (((source == 4 && (dest == 6 || dest == 2))
+       || (source == 116 && (dest == 118 || dest == 114)))
+      && board[source] != NULL && board[source]->canCastle(source, dest, board))
+    castleAttempt = true;
+  else
+    castleAttempt = false;
+  // Check for En Passant special case
+  if (board[source] != NULL && board[source]->canEnPassant(source, dest, board))
+    enPassantAttempt = true;
+  else
+    enPassantAttempt = false;
 
   // Let's see if there are any obstructions to the move, or if it's in a valid direction
   // A piece also can't move if it will result in leaving its own king in check
-  if (!castleAttempt && board[intSource]->canMove(intSource, intDest, board)
-      && !inCheck(intSource, intDest, opponent, player[15]))
+  if (!castleAttempt && !enPassantAttempt && !promotionAttempt
+      && board[source]->canMove(source, dest, board)
+      && !inCheck(source, dest, opponent, player[15]))
     {
-	  cout << playerColor << "'s " << *board[intSource] << " moves from " << source
-	       << " to " << dest;
-	  if (board[intDest] != NULL) // Taking someone
-	    {
-	      cout << " taking " << opponentColor << "'s " << *board[intDest];
-	      delete board[intDest];
-	      updateLocationArray(opponent, intDest, -1);
-	    }
-	  updateLocationArray(player, intSource, intDest);
-	  board[intSource]->setMoved();
-	  board[intDest] = board[intSource];
-	  board[intSource] = NULL;
-	  moveCounter++;
-	  cout << endl;
+      cout << playerColor << "'s " << *board[source] << " moves from " << sourceStr
+	   << " to " << destStr;
+      if (board[dest] != NULL) // Taking someone
+	{
+	  cout << " taking " << opponentColor << "'s " << *board[dest];
+	  delete board[dest];
+	  updateLocationArray(opponent, dest, -1);
+	  captureMade = moveCounter+1;
+	}
+      // Update pawnMoved if we're moving a pawn
+      for (int i = 7; i < 15; i++)
+	if (source == player[i])
+	  pawnMoved = moveCounter+1;
+      updateLocationArray(player, source, dest);
+      if (board[source]->getNumMoves() == 0)
+	board[source]->setFirstMoveNum(moveCounter);
+      ++(*board[source]);
+      board[dest] = board[source];
+      board[source] = NULL;
+      moveCounter++;
+      cout << endl;
     }
-  else if (castleAttempt && castle(intSource, intDest))
+  else if (castleAttempt && castle(source, dest))
     {
       cout << playerColor << " castles" << endl;
       moveCounter++;
     }
+  else if (enPassantAttempt && enPassant(source, dest))
+    {
+      cout << playerColor << "'s " << *board[dest] << " moves from " << sourceStr
+	   << " to " << destStr << " taking " << opponentColor << "'s pawn by en passant"
+	   << endl;
+      moveCounter++;
+    }
+  else if (promotionAttempt && promote(source, dest, promoteTo))
+    {
+      cout << playerColor << "'s pawn moves from " << sourceStr
+	   << " to " << destStr << " and is promoted to a " << *board[dest] << endl;
+      moveCounter++;
+    }
   else
     {
-      cout << playerColor << "'s " << *board[intSource] << " cannot move to "
-	   << dest << "!" << endl;
+      cout << playerColor << "'s " << *board[source] << " cannot move to "
+	   << destStr << "!" << endl;
       return false;
     }
 
@@ -106,6 +143,11 @@ bool ChessBoard::submitMove(string source, string dest)
       cout << "Stalemate" << endl;
       gameOver = true;
     }
+  else if ((moveCounter-pawnMoved) >= 100 || (moveCounter-captureMade) >=100)
+    {
+      cout << "Draw because of the fifty-move rule" << endl;
+      gameOver = true;
+    }
 
 #ifdef DEBUG
   printBoard();
@@ -119,6 +161,7 @@ int ChessBoard::parse(string square) const
   // Check for errors in the input
   if (square.length() != 2)
     return -1;
+  square[0] = toupper(square[0]);
   if (square[0] < 'A' || square[0] > 'H')
     return -1;
   if (square[1] < '1' || square[1] > '8')
@@ -225,8 +268,10 @@ bool ChessBoard::castle(int source, int dest)
     {
       updateLocationArray(player, source, source+2);
       updateLocationArray(player, source+3, source+1);
-      board[source]->setMoved();
-      board[source+3]->setMoved();
+      board[source]->setFirstMoveNum(moveCounter);
+      board[source+3]->setFirstMoveNum(moveCounter);
+      ++(*board[source]);
+      ++(*board[source+3]);
       board[source+2] = board[source];
       board[source] = NULL;
       board[source+1] = board[source+3];
@@ -241,12 +286,97 @@ bool ChessBoard::castle(int source, int dest)
     {
       updateLocationArray(player, source, source-2);
       updateLocationArray(player, source-4, source-1);
-      board[source]->setMoved();
-      board[source-4]->setMoved();
+      board[source]->setFirstMoveNum(moveCounter);
+      board[source-4]->setFirstMoveNum(moveCounter);
+      ++(*board[source]);
+      ++(*board[source-4]);
       board[source-2] = board[source];
       board[source] = NULL;
       board[source-1] = board[source-4];
       board[source-4] = NULL;
+      return true;
+    }
+  return false;
+}
+
+bool ChessBoard::enPassant(int source, int dest)
+{
+  int oppPawnLoc;
+  if (moveColor() == ChessPiece::WHITE)
+    oppPawnLoc = dest - 16; // VERTICAL
+  else
+    oppPawnLoc = dest + 16; // VERTICAL
+
+  if (board[dest] == NULL && board[oppPawnLoc] != NULL
+      && board[oppPawnLoc]->getNumMoves() == 1)
+    {
+      bool oppPawn = false;
+      for (int i = 7; i < 15; i++)
+	{
+	  if (oppPawnLoc == opponent[i]) // An opposing pawn
+	    {
+	      oppPawn = true;
+	      break;
+	    }
+	}
+      if (!oppPawn)
+	return false;
+      if (board[oppPawnLoc]->getFirstMoveNum() != moveCounter-1)
+	return false;
+
+      delete board[oppPawnLoc];
+      board[oppPawnLoc] = NULL;
+      updateLocationArray(opponent, oppPawnLoc, -1);
+      captureMade = moveCounter+1;
+
+      updateLocationArray(player, source, dest);
+      ++(*board[source]);
+      board[dest] = board[source];
+      board[source] = NULL;
+      pawnMoved = moveCounter+1;
+      return true;
+    }
+  return false;
+}
+
+bool ChessBoard::promote(int source, int dest, char promoteTo)
+{
+  if (board[source]->canPromote(source)
+      && board[source]->canMove(source, dest, board))
+    {
+      ChessPiece *promotedPiece;
+      switch (promoteTo)
+	{
+	case 'Q':
+	  promotedPiece = new queen(moveColor());
+	  break;
+	case 'R':
+	  promotedPiece = new rook(moveColor());
+	  break;
+	case 'B':
+	  promotedPiece = new bishop(moveColor());
+	  break;
+	case 'N':
+	  promotedPiece = new knight(moveColor());
+	  break;
+	default:
+	  return false;
+	  break;
+	}
+
+      if (board[dest] != NULL) // Taking someone
+	{
+	  cout << " taking " << opponentColor << "'s " << *board[dest];
+	  delete board[dest];
+	  updateLocationArray(opponent, dest, -1);
+	  captureMade = moveCounter+1;
+	}
+      pawnMoved = moveCounter+1;
+      updateLocationArray(player, source, dest);
+      ++(*board[source]);
+      board[dest] = promotedPiece;
+      delete board[source];
+      board[source] = NULL;
       return true;
     }
   return false;

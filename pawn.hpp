@@ -26,6 +26,12 @@ public:
   // is not blocked, or diagonally if it can take an opposing piece
   bool canMove(int source, int destination, ChessPiece **board) const;
 
+  // TODO
+  bool canEnPassant(int source, int dest, ChessPiece **board) const;
+
+  // TODO
+  bool canPromote(int source) const;
+
 private:
   // Returns true if the pawn can move from source to destination.
   // Pawns can only move forward, so this differs depending on color

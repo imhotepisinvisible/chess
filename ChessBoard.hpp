@@ -25,7 +25,7 @@ public:
   ~ChessBoard();
 
   // Processes a move.  Returns true if the move succeeds, false if the move fails
-  bool submitMove(std::string source, std::string dest);
+  bool submitMove(std::string sourceStr, std::string destStr);
 
   // Resets the board to its initial state.  Returns false if memory can't be
   // allocated for any reason
@@ -54,6 +54,12 @@ private:
   // Boolean flag to determine if a specific move is an attempted castle
   bool castleAttempt;
 
+  // Boolean flag to determine if a specific move is an attempted En Passant
+  bool enPassantAttempt;
+
+  // Boolean flag to determine if a specific move is an attempted promotion
+  bool promotionAttempt;
+
   // Pointer to the location array of the current player's pieces
   int *player;
 
@@ -65,6 +71,12 @@ private:
 
   // String of the current opponent's color
   std::string opponentColor;
+
+  // Two integers used for implementing the fifty-move rule.
+  // Contain the move number where the last pawn was moved and the last
+  // capture was made
+  int pawnMoved;
+  int captureMade;
 
   // Initialize the board.  Returns false if memory can't be allocated for
   // any reason.  Sets up the pieces on the board array and their locations
@@ -104,6 +116,12 @@ private:
   // and the king is not in check, will not move through check and will not
   // end up in check
   bool castle(int source, int dest);
+
+  // TODO
+  bool enPassant(int source, int dest);
+
+  // TODO
+  bool promote(int source, int dest, char promoteTo);
 
   // Checks for errors on either the source or destination inputs.  Returns true
   // on error, false on no error
