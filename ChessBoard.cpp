@@ -332,7 +332,8 @@ bool ChessBoard::enPassant(int source, int dest)
     oppPawnLoc = dest + 16; // VERTICAL
 
   if (board[dest] == NULL && board[oppPawnLoc] != NULL
-      && board[oppPawnLoc]->getNumMoves() == 1)
+      && board[oppPawnLoc]->getNumMoves() == 1
+      && !inCheck(source, dest, opponent, player[15]))
     {
       // Check if we're taking an opposing pawn
       bool oppPawn = false;
@@ -378,7 +379,8 @@ bool ChessBoard::enPassant(int source, int dest)
 bool ChessBoard::promote(int source, int dest, char promoteTo)
 {
   if (board[source]->canPromote(source)
-      && board[source]->canMove(source, dest, board))
+      && board[source]->canMove(source, dest, board)
+      && !inCheck(source, dest, opponent, player[15]))
     {
       ChessPiece *promotedPiece;
       switch (promoteTo)
@@ -396,6 +398,7 @@ bool ChessBoard::promote(int source, int dest, char promoteTo)
 	  promotedPiece = new knight(moveColor());
 	  break;
 	default:
+	  cout << "Error! Pawn can't promote to a " << promoteTo << endl;
 	  return false;
 	  break;
 	}
