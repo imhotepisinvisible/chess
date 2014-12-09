@@ -31,7 +31,16 @@ public:
   // allocated for any reason
   bool resetBoard();
 
+  // For future use.  Prints out the current points total of both players
+  void printPoints() const;
+
 private:
+  // Consts
+  static const int NUM_PIECES;
+  static const int ARRAY_LENGTH;
+  static const int ARRAY_COL_LENGTH;
+  static const int ARRAY_ROW_LENGTH;
+
   // The board array.  Using an 0x88 board (a one dimensional array of length 128)
   // because of the nice ability it gives you in generating moves and checking
   // for invalid input by doing a bitwise AND with 0x88
@@ -47,6 +56,12 @@ private:
 
   // An integer array of the location of all the black pieces on the board
   int blackPieceLocs[16];
+
+  // Total white points
+  int whitePoints;
+
+  // Total black points
+  int blackPoints;
 
   // Boolean flag to determine if the game has finished or not
   bool gameOver;
@@ -65,6 +80,9 @@ private:
 
   // Pointer to the location array of the current opponent's pieces
   int *opponent;
+
+  // Pointer to the player's points
+  int *playerPoints;
 
   // String of the current player's color
   std::string playerColor;
@@ -110,6 +128,9 @@ private:
   // is possible, false if not
   bool legalMovesExist(int *&player, int *&opponent) const;
 
+  // Processes a regular move.  Returns true if the move succeeded, false if not
+  bool makeMove(int source, int dest);
+
   // Processes a castle move, either king side or queen side.  Returns true
   // if the castle is possible, false if not, i.e. if the king has not moved,
   // the rook it is swapping with has not moved, the route is not blocked,
@@ -117,10 +138,12 @@ private:
   // end up in check
   bool castle(int source, int dest);
 
-  // TODO
+  // Processes an en passant move.  Returns true if the en passant succeeded,
+  // false if not
   bool enPassant(int source, int dest);
 
-  // TODO
+  // Processes a promotion.  Returns true if the promotion succeeded,
+  // false if not
   bool promote(int source, int dest, char promoteTo);
 
   // Checks for errors on either the source or destination inputs.  Returns true

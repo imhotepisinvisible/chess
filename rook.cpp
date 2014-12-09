@@ -20,6 +20,7 @@ using namespace std;
 rook::rook(Color _color)
   : ChessPiece(_color)
 {
+  pointsValue = 5;
   possDirs.push_back(VERTICAL);
   possDirs.push_back(-VERTICAL);
   possDirs.push_back(1);

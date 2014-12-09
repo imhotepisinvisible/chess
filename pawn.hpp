@@ -26,10 +26,10 @@ public:
   // is not blocked, or diagonally if it can take an opposing piece
   bool canMove(int source, int destination, ChessPiece **board) const;
 
-  // TODO
+  // Returns true if the pawn is able to make an en passant move, false if not
   bool canEnPassant(int source, int dest, ChessPiece **board) const;
 
-  // TODO
+  // Returns true if the pawn is able to be promoted, false if not
   bool canPromote(int source) const;
 
 private:

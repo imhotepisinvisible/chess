@@ -19,6 +19,7 @@ using namespace std;
 pawn::pawn(Color _color)
   : ChessPiece(_color)
 {
+  pointsValue = 1;
   possDirs.push_back(VERTICAL);
   possDirs.push_back(DIAGONAL);
   possDirs.push_back(ANTIDIAGONAL);
@@ -68,6 +69,7 @@ bool pawn::canEnPassant(int source, int dest, ChessPiece **board) const
       else if (color == BLACK && source >= 48 && source <= 55)
 	    return true;
     }
+
   return false;
 }
 
@@ -77,6 +79,7 @@ bool pawn::canPromote(int source) const
     return true;
   else if (color == BLACK && source >= 16 && source <= 23)
     return true;
+
   return false;
 }
 
@@ -143,6 +146,7 @@ vector<int> pawn::generateMoves(int source, ChessPiece **board)
 	  result.push_back(source - ANTIDIAGONAL);
 	}
     }
+
   return result;
 }
 

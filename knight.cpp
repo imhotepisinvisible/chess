@@ -20,6 +20,7 @@ using namespace std;
 knight::knight(Color _color)
   : ChessPiece(_color)
 {
+  pointsValue = 3;
   possDirs.push_back(L_LEFT_HIGH);
   possDirs.push_back(-L_LEFT_HIGH);
   possDirs.push_back(L_LEFT_LOW);

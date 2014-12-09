@@ -9,7 +9,7 @@
 * Header file for ChessPiece class                  *
 *                                                   *
 *****************************************************/
-#define DEBUG
+//#define DEBUG
 
 #ifndef CHESSPIECE_H
 #define CHESSPIECE_H
@@ -42,27 +42,32 @@ public:
   // Returns the color of the piece
   Color getColor() const;
 
-  /*// Sets moved to true
-    void setMoved();*/
-  // TODO
-  ChessPiece &operator++();
-
   // Returns whether a piece has moved or not
   int getNumMoves() const;
 
-  // TODO
+  // Sets the move number where a piece first moved
   void setFirstMoveNum(int moveCounter);
+
+  // Returns the move number when the piece first moved
   int getFirstMoveNum() const;
 
-  // Returns true if a piece is able to castle, false if not.  All pieces other than king
-  // will always return false
+  // Returns the points value of a piece
+  int getPointsValue() const;
+
+  // Returns true if a piece is able to castle, false if not.  All pieces
+  // other than king will always return false
   virtual bool canCastle(int source, int destination, ChessPiece **board) const;
 
-  // TODO
+  // Returns true if a piece is able to en passant, false if not.  All pieces
+  // other than pawns will always return false
   virtual bool canEnPassant(int source, int dest, ChessPiece **board) const;
 
-  // TODO
+  // Returns true if a piece is able to be promoted, false if not.  All pieces
+  // other than pawns will always return false
   virtual bool canPromote(int source) const;
+
+  // Prefix operator increments the number of moves a piece has made
+  ChessPiece &operator++();
 
   // Output operator outputs the name of the piece
   friend std::ostream &operator<<(std::ostream &out, const ChessPiece &cp);
@@ -92,6 +97,9 @@ protected:
 
   // The move number that a piece made its first move
   int firstMoveNum;
+
+  // The number of points that a piece is worth
+  int pointsValue;
 
   // Vector of possible directions a piece can move
   std::vector<int> possDirs;

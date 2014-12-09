@@ -20,6 +20,7 @@ using namespace std;
 king::king(Color _color)
   : ChessPiece(_color)
 {
+  pointsValue = 0;
   possDirs.push_back(VERTICAL);
   possDirs.push_back(-VERTICAL);
   possDirs.push_back(DIAGONAL);

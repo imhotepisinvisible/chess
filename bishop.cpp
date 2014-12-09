@@ -20,6 +20,7 @@ using namespace std;
 bishop::bishop(Color _color)
   : ChessPiece(_color)
 {
+  pointsValue = 3;
   possDirs.push_back(DIAGONAL);
   possDirs.push_back(-DIAGONAL);
   possDirs.push_back(ANTIDIAGONAL);

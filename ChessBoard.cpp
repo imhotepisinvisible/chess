@@ -24,8 +24,14 @@
 
 using namespace std;
 
+const int ChessBoard::NUM_PIECES = 16;
+const int ChessBoard::ARRAY_LENGTH = 128;
+const int ChessBoard::ARRAY_COL_LENGTH = 8;
+const int ChessBoard::ARRAY_ROW_LENGTH = 16;
+
 ChessBoard::ChessBoard()
-  : moveCounter(0), gameOver(false), pawnMoved(0), captureMade(0)
+  : moveCounter(0), whitePoints(0), blackPoints(0),
+    gameOver(false), pawnMoved(0), captureMade(0)
 {
   initBoard();
 }
@@ -37,9 +43,9 @@ ChessBoard::~ChessBoard()
 
 bool ChessBoard::submitMove(string sourceStr, string destStr)
 {
-  //TODO: points counter, check for draw at 3 identical moves,
-  // draw on impossibility of checkmate
+  //TODO: check for draw at 3 identical moves, draw on impossibility of checkmate
 
+  // Check for promotion special case
   char promoteTo;
   if (destStr.length() == 3)
     {
@@ -58,6 +64,7 @@ bool ChessBoard::submitMove(string sourceStr, string destStr)
   // Initialize player/opponent vars
   setupColors();
 
+  // Check for errors in the input
   if (inputError(source, dest))
       return false;
 
@@ -68,39 +75,18 @@ bool ChessBoard::submitMove(string sourceStr, string destStr)
     castleAttempt = true;
   else
     castleAttempt = false;
+
   // Check for En Passant special case
   if (board[source] != NULL && board[source]->canEnPassant(source, dest, board))
     enPassantAttempt = true;
   else
     enPassantAttempt = false;
 
-  // Let's see if there are any obstructions to the move, or if it's in a valid direction
-  // A piece also can't move if it will result in leaving its own king in check
+  // Process the move
   if (!castleAttempt && !enPassantAttempt && !promotionAttempt
-      && board[source]->canMove(source, dest, board)
-      && !inCheck(source, dest, opponent, player[15]))
+      && makeMove(source, dest))
     {
-      cout << playerColor << "'s " << *board[source] << " moves from " << sourceStr
-	   << " to " << destStr;
-      if (board[dest] != NULL) // Taking someone
-	{
-	  cout << " taking " << opponentColor << "'s " << *board[dest];
-	  delete board[dest];
-	  updateLocationArray(opponent, dest, -1);
-	  captureMade = moveCounter+1;
-	}
-      // Update pawnMoved if we're moving a pawn
-      for (int i = 7; i < 15; i++)
-	if (source == player[i])
-	  pawnMoved = moveCounter+1;
-      updateLocationArray(player, source, dest);
-      if (board[source]->getNumMoves() == 0)
-	board[source]->setFirstMoveNum(moveCounter);
-      ++(*board[source]);
-      board[dest] = board[source];
-      board[source] = NULL;
       moveCounter++;
-      cout << endl;
     }
   else if (castleAttempt && castle(source, dest))
     {
@@ -184,7 +170,7 @@ ChessPiece::Color ChessBoard::moveColor() const
 
 void ChessBoard::updateLocationArray(int *&locArray, int source, int dest)
 {
-  for (int i = 0; i < 16; i++) //magic number
+  for (int i = 0; i < NUM_PIECES; i++)
     {
       if (locArray[i] == source)
 	{	
@@ -209,7 +195,7 @@ bool ChessBoard::inCheck(int source, int dest, int *&pieces, int kingLoc) const
     kingLoc = dest;
 
   // Run through all of the pieces, checking if they attack the king
-  for (int i = 0; i < 16; i++) //magic number
+  for (int i = 0; i < NUM_PIECES; i++)
     {
       if (pieces[i] != -1 && pieces[i] != dest
 	  && board[pieces[i]]->canMove(pieces[i], kingLoc, board))
@@ -230,7 +216,7 @@ bool ChessBoard::inCheck(int source, int dest, int *&pieces, int kingLoc) const
 bool ChessBoard::inCheck(int *&pieces, int kingLoc) const
 {
   // Run through all of the pieces, checking if they attack the king
-  for (int i = 0; i < 16; i++) //magic number
+  for (int i = 0; i < NUM_PIECES; i++)
     {
       if (pieces[i] != -1 && board[pieces[i]]->canMove(pieces[i], kingLoc, board))
 	  return true;
@@ -243,7 +229,7 @@ bool ChessBoard::legalMovesExist(int *&player, int *&opponent) const
 {
   // Loop over all of the pieces, checking if any of them can make a legal move
   // (i.e. one that doesn't result in check). If so return true, else return false
-  for (int i = 0; i < 16; i++) //magic number
+  for (int i = 0; i < NUM_PIECES; i++)
     {
       if (player[i] != -1)
 	{
@@ -258,6 +244,51 @@ bool ChessBoard::legalMovesExist(int *&player, int *&opponent) const
   return false;
 }
 
+bool ChessBoard::makeMove(int source, int dest)
+{
+  // Let's see if there are any obstructions to the move, or if it's in a valid direction
+  // A piece also can't move if it will result in leaving its own king in check
+  if (board[source]->canMove(source, dest, board)
+      && !inCheck(source, dest, opponent, player[15]))
+    {
+      cout << playerColor << "'s " << *board[source] << " moves from "
+	   << (char)(source%ARRAY_COL_LENGTH + 'A')
+	   << (char)(source/ARRAY_ROW_LENGTH + '1')
+	   << " to " << (char)(dest%ARRAY_COL_LENGTH + 'A')
+	   << (char)(dest/ARRAY_ROW_LENGTH + '1');
+
+      if (board[dest] != NULL) // Taking someone
+	{
+	  cout << " taking " << opponentColor << "'s " << *board[dest];
+	  *playerPoints += board[dest]->getPointsValue();
+	  delete board[dest];
+	  updateLocationArray(opponent, dest, -1);
+	  captureMade = moveCounter+1;
+	}
+
+      // Update pawnMoved if we're moving a pawn
+      for (int i = 7; i < 15; i++)
+	if (source == player[i])
+	  pawnMoved = moveCounter+1;
+
+      updateLocationArray(player, source, dest);
+
+      if (board[source]->getNumMoves() == 0)
+	board[source]->setFirstMoveNum(moveCounter);
+
+      ++(*board[source]);
+
+      board[dest] = board[source];
+      board[source] = NULL;
+
+      cout << endl;
+
+      return true;
+    }
+
+  return false;
+}
+
 bool ChessBoard::castle(int source, int dest)
 {
   if (board[source]->canCastle(source, dest, board)
@@ -268,14 +299,18 @@ bool ChessBoard::castle(int source, int dest)
     {
       updateLocationArray(player, source, source+2);
       updateLocationArray(player, source+3, source+1);
+
       board[source]->setFirstMoveNum(moveCounter);
       board[source+3]->setFirstMoveNum(moveCounter);
+
       ++(*board[source]);
       ++(*board[source+3]);
+
       board[source+2] = board[source];
       board[source] = NULL;
       board[source+1] = board[source+3];
       board[source+3] = NULL;
+
       return true;
     }
   else if (board[source]->canCastle(source, dest, board)
@@ -286,14 +321,18 @@ bool ChessBoard::castle(int source, int dest)
     {
       updateLocationArray(player, source, source-2);
       updateLocationArray(player, source-4, source-1);
+
       board[source]->setFirstMoveNum(moveCounter);
       board[source-4]->setFirstMoveNum(moveCounter);
+
       ++(*board[source]);
       ++(*board[source-4]);
+
       board[source-2] = board[source];
       board[source] = NULL;
       board[source-1] = board[source-4];
       board[source-4] = NULL;
+
       return true;
     }
   return false;
@@ -324,6 +363,7 @@ bool ChessBoard::enPassant(int source, int dest)
       if (board[oppPawnLoc]->getFirstMoveNum() != moveCounter-1)
 	return false;
 
+      *playerPoints += board[oppPawnLoc]->getPointsValue();
       delete board[oppPawnLoc];
       board[oppPawnLoc] = NULL;
       updateLocationArray(opponent, oppPawnLoc, -1);
@@ -331,8 +371,10 @@ bool ChessBoard::enPassant(int source, int dest)
 
       updateLocationArray(player, source, dest);
       ++(*board[source]);
+
       board[dest] = board[source];
       board[source] = NULL;
+
       pawnMoved = moveCounter+1;
       return true;
     }
@@ -367,16 +409,20 @@ bool ChessBoard::promote(int source, int dest, char promoteTo)
       if (board[dest] != NULL) // Taking someone
 	{
 	  cout << " taking " << opponentColor << "'s " << *board[dest];
+	  *playerPoints += board[dest]->getPointsValue();
 	  delete board[dest];
 	  updateLocationArray(opponent, dest, -1);
 	  captureMade = moveCounter+1;
 	}
+
       pawnMoved = moveCounter+1;
       updateLocationArray(player, source, dest);
       ++(*board[source]);
+
       board[dest] = promotedPiece;
       delete board[source];
       board[source] = NULL;
+
       return true;
     }
   return false;
@@ -400,7 +446,8 @@ bool ChessBoard::inputError(int source, int dest) const
   if (board[source] == NULL)
     {
       cout << "There is no piece at position "
-	   << (char)(source%8 + 'A') << (char)(source/16 + '1')
+	   << (char)(source%ARRAY_COL_LENGTH + 'A')
+	   << (char)(source/ARRAY_ROW_LENGTH + '1')
 	   << "!" << endl;
       return true;
     }
@@ -428,12 +475,14 @@ void ChessBoard::setupColors()
       opponent = blackPieceLocs;
       playerColor = "White";
       opponentColor = "Black";
+      playerPoints = &whitePoints;
       break;
     case ChessPiece::BLACK:
       player = blackPieceLocs;
       opponent = whitePieceLocs;
       playerColor = "Black";
       opponentColor = "White";
+      playerPoints = &blackPoints;
       break;
     default:
       break;
@@ -445,7 +494,7 @@ bool ChessBoard::initBoard()
 {
   cout << "A new chess game is started!" << endl;
   // Set up a fresh board.  Return false if it fails for some reason.
-  board = new (nothrow) ChessPiece*[128]; //TODO remove magic number, and do assertion (or (nothrow))
+  board = new (nothrow) ChessPiece*[ARRAY_LENGTH];
   if (board == NULL)
     {
       cout << "Error allocating memory for ChessBoard" << endl;
@@ -485,6 +534,20 @@ bool ChessBoard::initBoard()
   board[117] = new bishop(ChessPiece::BLACK);
   board[118] = new knight(ChessPiece::BLACK);
   board[119] = new rook(ChessPiece::BLACK);
+  for (int i = 0; i < 120; i++)
+    {
+      if (board[i] == NULL)
+	{
+	  cout << "Error allocating memory for ChessPiece" << endl;
+	  return false;
+	}
+      if (i == 7)
+	i = 15;
+      if (i == 23)
+	i = 95;
+      if (i == 103)
+	i = 111;
+    }
 
   // We can set up the pieces array too.  Ordered by most powerful piece.
   whitePieceLocs[0] = 3; // Queen
@@ -526,7 +589,7 @@ bool ChessBoard::initBoard()
 
 void ChessBoard::deleteBoard()
 {
-  for (int i = 0; i < 128; i++)
+  for (int i = 0; i < ARRAY_LENGTH; i++)
     {
     if (board[i] != NULL)
       {
@@ -544,8 +607,19 @@ bool ChessBoard::resetBoard()
   if (!initBoard())
     return false;
   moveCounter = 0;
+  whitePoints = 0;
+  blackPoints = 0;
+  pawnMoved = 0;
+  captureMade = 0;
   gameOver = false;
   return true;
+}
+
+void ChessBoard::printPoints() const
+{
+  cout << "White has " << whitePoints << " points." << endl;
+  cout << "Black has " << blackPoints << " points." << endl;
+  return;
 }
 
 #ifdef DEBUG
@@ -564,12 +638,12 @@ void ChessBoard::printBoard() const
   for (int i = 7; i >= 0; i--)
     {
       cout << i+1 << "  \u2502";
-      for (int j = 0; j < 8; j++)
+      for (int j = 0; j < ARRAY_COL_LENGTH; j++)
 	{
-	  if (board[i*16+j] != NULL)
+	  if (board[i*ARRAY_ROW_LENGTH+j] != NULL)
 	    {
 	      cout << " ";
-	      *board[i*16+j] >> cout << " ";
+	      *board[i*ARRAY_ROW_LENGTH+j] >> cout << " ";
 	    }
 	  else
 	    cout << "   ";
@@ -600,7 +674,7 @@ void ChessBoard::printBoard() const
        << "\u2500\u2500\u2500\u2518"
        << endl;
   cout << "     A   B   C   D   E   F   G   H" << endl;
-
+  printPoints();
   return;
 
 }

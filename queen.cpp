@@ -20,6 +20,7 @@ using namespace std;
 queen::queen(Color _color)
   : ChessPiece(_color)
 {
+  pointsValue = 9;
   possDirs.push_back(VERTICAL);
   possDirs.push_back(-VERTICAL);
   possDirs.push_back(1);

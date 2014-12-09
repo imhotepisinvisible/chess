@@ -132,18 +132,6 @@ ChessPiece::Color ChessPiece::getColor() const
   return color;
 }
 
-/*void ChessPiece::setMoved()
-{
-  moved = true;
-  return;
-  }*/
-
-ChessPiece &ChessPiece::operator++()
-{
-  ++numMoves;
-  return *this;
-}
-
 int ChessPiece::getNumMoves() const
 {
   return numMoves;
@@ -160,6 +148,11 @@ int ChessPiece::getFirstMoveNum() const
   return firstMoveNum;
 }
 
+int ChessPiece::getPointsValue() const
+{
+  return pointsValue;
+}
+
 bool ChessPiece::canCastle(int source, int destination, ChessPiece **board) const
 {
   return false;
@@ -173,6 +166,12 @@ bool ChessPiece::canEnPassant(int source, int dest, ChessPiece **board) const
 bool ChessPiece::canPromote(int source) const
 {
   return false;
+}
+
+ChessPiece &ChessPiece::operator++()
+{
+  ++numMoves;
+  return *this;
 }
 
 ostream &operator<<(ostream &out, const ChessPiece &cp)
