@@ -31,15 +31,13 @@ public:
   // allocated for any reason
   bool resetBoard();
 
-  // For future use.  Prints out the current points total of both players
-  void printPoints() const;
-
 private:
   // Consts
   static const int NUM_PIECES;
   static const int ARRAY_LENGTH;
   static const int ARRAY_COL_LENGTH;
   static const int ARRAY_ROW_LENGTH;
+  static const int OFFBOARD;
 
   // The board array.  Using an 0x88 board (a one dimensional array of length 128)
   // because of the nice ability it gives you in generating moves and checking
@@ -65,15 +63,6 @@ private:
 
   // Boolean flag to determine if the game has finished or not
   bool gameOver;
-
-  // Boolean flag to determine if a specific move is an attempted castle
-  bool castleAttempt;
-
-  // Boolean flag to determine if a specific move is an attempted En Passant
-  bool enPassantAttempt;
-
-  // Boolean flag to determine if a specific move is an attempted promotion
-  bool promotionAttempt;
 
   // Pointer to the location array of the current player's pieces
   int *player;
@@ -152,6 +141,12 @@ private:
 
   // Sets up the pointers and string for the current move's player and opponent
   void setupColors();
+
+  // Prints outs a move as a string given an integer source and destination
+  void printMove(int source, int dest) const;
+
+  // For future use.  Prints out the current points total of both players
+  void printPoints() const;
 
   // Debug only.  Prints out the board so you can see the state of the game at a
   // specified point
