@@ -22,7 +22,7 @@ public:
   ChessBoard();
 
   // Destructor. Deallocate memory allocated for the board and pieces
-  ~ChessBoard();
+  virtual ~ChessBoard();
 
   // Processes a move.  Returns true if the move succeeds, false if the move fails
   bool submitMove(std::string sourceStr, std::string destStr);

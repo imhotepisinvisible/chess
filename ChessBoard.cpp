@@ -560,8 +560,8 @@ bool ChessBoard::initBoard()
   whitePieceLocs[0] = 3; // Queen
   whitePieceLocs[1] = 0; // Rook
   whitePieceLocs[2] = 7; // Rook
-  whitePieceLocs[3] = 2; // Bishop
-  whitePieceLocs[4] = 5; // Bishop
+  whitePieceLocs[3] = 2; // Light Square Bishop
+  whitePieceLocs[4] = 5; // Dark Square Bishop
   whitePieceLocs[5] = 1; // Knight
   whitePieceLocs[6] = 6; // Knight
   whitePieceLocs[7] = 16; // Pawn
@@ -577,8 +577,8 @@ bool ChessBoard::initBoard()
   blackPieceLocs[0] = 115; // Queen
   blackPieceLocs[1] = 112; // Rook
   blackPieceLocs[2] = 119; // Rook
-  blackPieceLocs[3] = 114; // Bishop
-  blackPieceLocs[4] = 117; // Bishop
+  blackPieceLocs[3] = 117; // Light Square Bishop
+  blackPieceLocs[4] = 114; // Dark Square Bishop
   blackPieceLocs[5] = 113; // Knight
   blackPieceLocs[6] = 118; // Knight
   blackPieceLocs[7] = 96; // Pawn
