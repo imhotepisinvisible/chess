@@ -9,7 +9,7 @@
 * Header file for ChessPiece class                  *
 *                                                   *
 *****************************************************/
-//#define DEBUG
+#define DEBUG
 
 #ifndef CHESSPIECE_H
 #define CHESSPIECE_H

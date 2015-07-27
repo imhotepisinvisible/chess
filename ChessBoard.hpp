@@ -31,6 +31,12 @@ public:
   // allocated for any reason
   bool resetBoard();
 
+// Debug only.  Prints out the board so you can see the state of the game at a
+  // specified point
+#ifdef DEBUG
+  void printBoard() const;
+#endif
+
 private:
   // Consts
   static const int NUM_PIECES;
@@ -147,12 +153,6 @@ private:
 
   // For future use.  Prints out the current points total of both players
   void printPoints() const;
-
-  // Debug only.  Prints out the board so you can see the state of the game at a
-  // specified point
-#ifdef DEBUG
-  void printBoard() const;
-#endif
 
 };
 

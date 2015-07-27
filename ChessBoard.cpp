@@ -693,6 +693,7 @@ void ChessBoard::printBoard() const
        << endl;
   cout << "     A   B   C   D   E   F   G   H" << endl;
   printPoints();
+  cout << (moveColor() == ChessPiece::WHITE ? "White" : "Black") << "'s turn" << endl;
   return;
 
 }
